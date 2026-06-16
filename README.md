@@ -59,6 +59,9 @@ mindmap
 - **Vector retrieval** over Qdrant with top-k similarity search.
 - **Grounded generation** — answers cite the source documents they used.
 - **HTTP API** (FastAPI): `/health`, `POST /api/v1/query`, `POST /api/v1/answer`.
+- **Hybrid retrieval + reranking** — optional BM25 + dense fusion and
+  cross-encoder reranking, evaluated on real ground truth (see
+  [docs/experiments.md](docs/experiments.md)).
 - **Evaluation harness** — deterministic Hit@k / MRR / Recall@k over a gold set.
 - **Tested** — 37 offline tests (mocked embeddings + LLM), Ruff-clean.
 

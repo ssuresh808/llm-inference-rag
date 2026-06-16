@@ -33,6 +33,10 @@ def test_settings_defaults_without_env(monkeypatch):
     assert settings.llm_model == "qwen2.5:14b"
     assert settings.ollama_base_url == "http://localhost:11434"
     assert settings.corpus_dir == "data/sample"
+    assert settings.hybrid is False
+    assert settings.rerank is False
+    assert settings.reranker_model == "BAAI/bge-reranker-base"
+    assert settings.rerank_fetch_k == 20
 
 
 def test_get_settings_is_cached():

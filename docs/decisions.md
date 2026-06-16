@@ -221,3 +221,25 @@ NemoClaw ≠ NeMo Retriever (ADR-003) — different product, similar "Nemo" nami
   Verified: MPS detected and selected; 6,341 chunks embedded on-device. Changing
   the embedding model changes the vector dimension, so re-indexing is required
   (ADR-003).
+
+---
+
+## ADR-014: Hybrid retrieval + cross-encoder reranking
+
+- **Status:** Implemented and **measured** (see docs/experiments.md). Hybrid
+  adopted; reranking kept but gated off (measured negative on the current
+  metric).
+- **Decision:** Add optional **hybrid** dense+BM25 retrieval (Qdrant +
+  `fastembed` sparse) and optional **cross-encoder reranking**
+  (`bge-reranker-base`), both config-gated (`HYBRID`, `RERANK`) and injected into
+  `RetrievalEngine`.
+- **Why:** The two highest-leverage retrieval-quality levers. Evaluated against
+  the rag-mini-wikipedia answer-recall benchmark (ADR built on real ground
+  truth, not a demo).
+- **Result:** Hybrid **+0.045 MRR / +0.020 Hit@5** over dense — ship it.
+  Reranking **−0.119 MRR** on the answer-containment metric: the cross-encoder
+  optimizes semantic relevance while the proxy rewards answer presence
+  (objective/metric mismatch). Kept in code, off by default; needs a
+  relevance-aware metric (RAGAS / gold labels) to judge fairly.
+- **Consequence:** Adds `fastembed`; the reranker downloads `bge-reranker-base`
+  (~1.1 GB) on first use and runs on MPS.

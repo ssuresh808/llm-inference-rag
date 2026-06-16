@@ -38,6 +38,10 @@ class Settings(BaseSettings):
         anthropic_api_key: API key for the Anthropic provider. Optional; only
             needed when ``llm_provider == "anthropic"``.
         corpus_dir: Directory of source documents the API indexes on first use.
+        hybrid: Enable hybrid dense+sparse (BM25) retrieval.
+        rerank: Enable cross-encoder reranking of retrieved candidates.
+        reranker_model: Cross-encoder reranker model id.
+        rerank_fetch_k: Number of candidates to fetch before reranking.
     """
 
     model_config = SettingsConfigDict(
@@ -95,6 +99,22 @@ class Settings(BaseSettings):
     corpus_dir: str = Field(
         default="data/sample",
         description="Directory of source documents the API indexes on first use.",
+    )
+    hybrid: bool = Field(
+        default=False,
+        description="Enable hybrid dense+sparse (BM25) retrieval.",
+    )
+    rerank: bool = Field(
+        default=False,
+        description="Enable cross-encoder reranking of retrieved candidates.",
+    )
+    reranker_model: str = Field(
+        default="BAAI/bge-reranker-base",
+        description="Cross-encoder reranker model id.",
+    )
+    rerank_fetch_k: int = Field(
+        default=20,
+        description="Number of candidates to fetch before reranking.",
     )
 
 

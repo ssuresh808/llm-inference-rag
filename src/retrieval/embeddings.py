@@ -108,3 +108,25 @@ def build_embeddings(settings: Settings | None = None) -> Embeddings:
         f"Unknown embedding_provider '{settings.embedding_provider}'. "
         "Expected one of: huggingface, openai, nvidia."
     )
+
+
+def build_sparse_embeddings(model_name: str = "Qdrant/bm25"):
+    """Build a sparse (BM25) embedding for hybrid retrieval (ADR-014).
+
+    Args:
+        model_name: FastEmbed sparse model id.
+
+    Returns:
+        A ``FastEmbedSparse`` instance for use as Qdrant's sparse vector.
+
+    Raises:
+        ImportError: If ``fastembed`` / ``FastEmbedSparse`` is not available.
+    """
+    try:
+        from langchain_qdrant import FastEmbedSparse
+    except ImportError as exc:  # pragma: no cover - install guard
+        raise ImportError(
+            "Hybrid retrieval needs fastembed (and langchain-qdrant's "
+            "FastEmbedSparse). Install fastembed or set HYBRID=false."
+        ) from exc
+    return FastEmbedSparse(model_name=model_name)

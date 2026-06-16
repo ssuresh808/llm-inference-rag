@@ -129,7 +129,7 @@ every choice is defensible in an interview.
 ## Deferred (decided when their phase arrives)
 
 - **ADR-006 LLM / generation:** Implemented (`src/generation/`). Default to
-  **local Ollama** (free, no key — e.g. Llama 3.2 / Qwen) via `build_llm()`,
+  **local Ollama** (`qwen2.5:14b` on Apple Silicon; free, no key) via `build_llm()`,
   behind the same provider-factory pattern as embeddings, swappable to
   **Claude** or OpenAI by config. Requires a running Ollama server for real
   generation; `answer_question()` retrieves context then generates a grounded,

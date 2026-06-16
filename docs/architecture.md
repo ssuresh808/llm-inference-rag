@@ -30,7 +30,7 @@ flowchart TD
         G --> I
         I --> J["Assemble cited context"]
         J --> K["LLM factory (LLM_PROVIDER)"]
-        K -->|"Ollama llama3.2 — default, free"| L["Grounded answer + sources"]
+        K -->|"Ollama qwen2.5:14b — default, free"| L["Grounded answer + sources"]
         K -.->|"swap via env: Claude / OpenAI"| L
     end
 
@@ -50,7 +50,7 @@ sequenceDiagram
     participant Eng as RetrievalEngine
     participant Emb as Embeddings (bge-large, MPS)
     participant DB as Qdrant
-    participant LLM as LLM (Ollama llama3.2)
+    participant LLM as LLM (Ollama qwen2.5:14b)
 
     User->>API: POST { text, top_k }
     API->>Eng: query(text, top_k)
@@ -87,7 +87,7 @@ hosted provider is a config change, not a code change.
 | Concern | Env var | Default (free) | Swap options |
 |---|---|---|---|
 | Embeddings | `EMBEDDING_PROVIDER` | `huggingface` (`bge-large`, MPS) | `nvidia`, `openai` |
-| LLM | `LLM_PROVIDER` | `ollama` (`llama3.2`) | `anthropic`, `openai` |
+| LLM | `LLM_PROVIDER` | `ollama` (`qwen2.5:14b`) | `anthropic`, `openai` |
 
 > Note: embedding providers emit different vector dimensions, so switching the
 > embedding provider requires re-indexing the corpus into a fresh collection.

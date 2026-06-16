@@ -1,11 +1,14 @@
 """Ingest a Hugging Face dataset as a retrieval corpus.
 
-Streams a public HF dataset, optionally filters rows to the project's domain by
-keyword, and converts them to LangChain ``Document`` objects. The row-to-document
-transform is a pure function, so it is unit-tested without any network access.
+Streams a public HF dataset, optionally filters rows to the project's domain, and
+converts them to LangChain ``Document`` objects. The row-to-document transform is
+a pure function, so it is unit-tested without any network access.
 
-Default target: ``CShorten/ML-ArXiv-Papers`` (title + abstract), filtered to
-LLM/ML inference-optimization topics (ADR-012).
+Default target: ``CShorten/ML-ArXiv-Papers`` (title + abstract). To stay on the
+inference-optimization domain (ADR-000), a row is kept only if it matches at
+least one term in **every** keyword group — i.e. it must be about language
+models/transformers **and** about inference efficiency/serving (ADR-012). A
+single broad OR-list let in too much general ML.
 
 CLI::
 
@@ -24,8 +27,22 @@ DEFAULT_DATASET = "CShorten/ML-ArXiv-Papers"
 DEFAULT_TEXT_COLUMNS = ("title", "abstract")
 DEFAULT_TITLE_COLUMN = "title"
 
-# Keywords that keep an abstract on the inference-optimization domain (ADR-000).
-DEFAULT_KEYWORDS = (
+# A row is kept only if it matches >=1 term in EVERY group below:
+#   (1) it is about language models / transformers, AND
+#   (2) it concerns inference efficiency / serving.
+MODEL_TERMS = (
+    "language model",
+    "large language model",
+    "llm",
+    "transformer",
+    "gpt",
+    "attention",
+    "autoregressive",
+    "sequence-to-sequence",
+    "machine translation",
+    "text generation",
+)
+EFFICIENCY_TERMS = (
     "inference",
     "latency",
     "throughput",
@@ -33,21 +50,31 @@ DEFAULT_KEYWORDS = (
     "quantize",
     "kv cache",
     "kv-cache",
-    "attention",
     "serving",
-    "gpu",
     "speculative",
     "batching",
-    "parallelism",
-    "distillation",
     "pruning",
-    "efficient",
+    "distillation",
+    "compression",
     "low-bit",
     "fp8",
     "int8",
-    "decoding",
-    "memory",
+    "memory footprint",
 )
+DEFAULT_KEYWORD_GROUPS = (MODEL_TERMS, EFFICIENCY_TERMS)
+
+
+def _matches_groups(text_lower: str, groups: tuple[tuple[str, ...], ...]) -> bool:
+    """Return True if ``text_lower`` matches at least one term in every group.
+
+    Args:
+        text_lower: Lower-cased text to test.
+        groups: Tuple of keyword groups; the text must hit one term per group.
+
+    Returns:
+        Whether the text satisfies the AND-of-ORs condition.
+    """
+    return all(any(term in text_lower for term in group) for group in groups)
 
 
 def rows_to_documents(
@@ -56,31 +83,30 @@ def rows_to_documents(
     dataset_id: str,
     text_columns: tuple[str, ...] = DEFAULT_TEXT_COLUMNS,
     title_column: str | None = DEFAULT_TITLE_COLUMN,
-    keywords: tuple[str, ...] | None = DEFAULT_KEYWORDS,
+    keyword_groups: tuple[tuple[str, ...], ...] | None = DEFAULT_KEYWORD_GROUPS,
     limit: int | None = None,
 ) -> list[Document]:
-    """Convert dataset rows into documents, optionally filtering by keyword.
+    """Convert dataset rows into documents, filtering by keyword groups.
 
     Args:
         rows: Iterable of dataset rows (dicts).
         dataset_id: Identifier used to build the ``source`` metadata.
         text_columns: Columns concatenated (in order) into document content.
         title_column: Column stored as ``title`` metadata, if present.
-        keywords: If given, keep only rows whose text contains one of these
-            (case-insensitive). Pass ``None`` to keep every non-empty row.
+        keyword_groups: Keep a row only if its text matches at least one term in
+            every group (AND-of-ORs). Pass ``None`` to keep every non-empty row.
         limit: Maximum number of documents to return.
 
     Returns:
         The converted documents (filtered, capped at ``limit``).
     """
-    lowered = tuple(k.lower() for k in keywords) if keywords else ()
     documents: list[Document] = []
     for index, row in enumerate(rows):
         parts = [str(row[c]).strip() for c in text_columns if row.get(c)]
         text = "\n\n".join(part for part in parts if part)
         if not text:
             continue
-        if lowered and not any(keyword in text.lower() for keyword in lowered):
+        if keyword_groups and not _matches_groups(text.lower(), keyword_groups):
             continue
         metadata = {"source": f"{dataset_id}#{index}"}
         if title_column and row.get(title_column):

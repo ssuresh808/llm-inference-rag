@@ -1,0 +1,12 @@
+node_modules/
+__pycache__/
+.env
+.venv/
+*.pyc
+.DS_Store
+data/raw/
+*.pkl
+*.bin
+.pytest_cache/
+.ruff_cache/
+*.egg-info/

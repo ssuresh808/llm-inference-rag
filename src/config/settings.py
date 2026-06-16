@@ -30,6 +30,7 @@ class Settings(BaseSettings):
         qdrant_url: Qdrant location. Use ``":memory:"`` for the local in-memory
             store (Phase 1 default) or an ``http(s)://host:port`` URL for a
             running Qdrant instance.
+        qdrant_path: Local on-disk Qdrant storage path; empty = in-memory.
         qdrant_collection: Name of the Qdrant collection holding the corpus.
         llm_provider: LLM backend. One of ``"ollama"`` (local, free — default),
             ``"anthropic"``, or ``"openai"``. Swappable via config (ADR-006).
@@ -79,6 +80,10 @@ class Settings(BaseSettings):
     qdrant_url: str = Field(
         default=":memory:",
         description="Qdrant URL, or ':memory:' for the local in-memory store.",
+    )
+    qdrant_path: str = Field(
+        default="",
+        description="Local on-disk Qdrant storage path; empty string = in-memory.",
     )
     qdrant_collection: str = Field(
         default="rag_portfolio",

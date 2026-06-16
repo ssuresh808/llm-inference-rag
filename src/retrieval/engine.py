@@ -30,6 +30,7 @@ class RetrievalEngine:
         *,
         collection_name: str = "rag_portfolio",
         qdrant_url: str = ":memory:",
+        qdrant_path: str = "",
         sparse_embeddings: object | None = None,
         reranker: object | None = None,
         rerank_fetch_k: int = DEFAULT_RERANK_FETCH_K,
@@ -40,6 +41,8 @@ class RetrievalEngine:
             embeddings: Dense embeddings backend for indexing and queries.
             collection_name: Qdrant collection to write to / read from.
             qdrant_url: ``":memory:"`` for a local store, else an ``http`` URL.
+            qdrant_path: On-disk Qdrant storage path; when set, takes precedence
+                over ``qdrant_url`` and persists the collection between runs.
             sparse_embeddings: Optional sparse (BM25) embedding; when provided,
                 indexing/retrieval use Qdrant hybrid mode.
             reranker: Optional object with ``rerank(query, docs, top_k)``; when
@@ -52,7 +55,44 @@ class RetrievalEngine:
         self._rerank_fetch_k = rerank_fetch_k
         self._collection_name = collection_name
         self._qdrant_url = qdrant_url
+        self._qdrant_path = qdrant_path
         self._vector_store: QdrantVectorStore | None = None
+
+    def _client_kwargs(self) -> dict:
+        """Return Qdrant client kwargs for the configured storage location."""
+        if self._qdrant_path:
+            return {"path": self._qdrant_path}
+        if self._qdrant_url == ":memory:":
+            return {"location": ":memory:"}
+        return {"url": self._qdrant_url}
+
+    def _hybrid_kwargs(self) -> dict:
+        """Return hybrid-mode kwargs when a sparse embedding is configured."""
+        if self._sparse_embeddings is None:
+            return {}
+        return {
+            "sparse_embedding": self._sparse_embeddings,
+            "retrieval_mode": RetrievalMode.HYBRID,
+        }
+
+    def connect_existing(self) -> None:
+        """Attach to an already-indexed collection without re-indexing.
+
+        Used to read a persistent (on-disk/server) Qdrant collection that was
+        seeded by a separate process.
+        """
+        self._vector_store = QdrantVectorStore.from_existing_collection(
+            embedding=self._embeddings,
+            collection_name=self._collection_name,
+            **self._client_kwargs(),
+            **self._hybrid_kwargs(),
+        )
+
+    def close(self) -> None:
+        """Close the underlying Qdrant client (releases any on-disk lock)."""
+        if self._vector_store is not None:
+            self._vector_store.client.close()
+            self._vector_store = None
 
     def index(self, chunks: list[Document]) -> int:
         """Index chunks, creating the collection on first call.
@@ -72,23 +112,12 @@ class RetrievalEngine:
             raise ValueError("index() requires at least one chunk.")
 
         if self._vector_store is None:
-            location_kwarg = (
-                {"location": ":memory:"}
-                if self._qdrant_url == ":memory:"
-                else {"url": self._qdrant_url}
-            )
-            hybrid_kwarg: dict = {}
-            if self._sparse_embeddings is not None:
-                hybrid_kwarg = {
-                    "sparse_embedding": self._sparse_embeddings,
-                    "retrieval_mode": RetrievalMode.HYBRID,
-                }
             self._vector_store = QdrantVectorStore.from_documents(
                 documents=chunks,
                 embedding=self._embeddings,
                 collection_name=self._collection_name,
-                **location_kwarg,
-                **hybrid_kwarg,
+                **self._client_kwargs(),
+                **self._hybrid_kwargs(),
             )
             count = len(chunks)
         else:
@@ -147,6 +176,7 @@ def build_engine(settings: Settings | None = None) -> RetrievalEngine:
         build_embeddings(settings),
         collection_name=settings.qdrant_collection,
         qdrant_url=settings.qdrant_url,
+        qdrant_path=settings.qdrant_path,
         sparse_embeddings=sparse,
         reranker=reranker,
         rerank_fetch_k=settings.rerank_fetch_k,

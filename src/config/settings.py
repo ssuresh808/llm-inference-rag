@@ -82,7 +82,7 @@ class Settings(BaseSettings):
         description="LLM backend: 'ollama' (local/free), 'anthropic', or 'openai'.",
     )
     llm_model: str = Field(
-        default="llama3.2",
+        default="qwen2.5:14b",
         description="Model id for the active LLM provider.",
     )
     ollama_base_url: str = Field(

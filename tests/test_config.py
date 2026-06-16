@@ -30,7 +30,7 @@ def test_settings_defaults_without_env(monkeypatch):
     assert settings.embedding_batch_size == 64
     assert settings.qdrant_collection == "rag_portfolio"
     assert settings.llm_provider == "ollama"
-    assert settings.llm_model == "llama3.2"
+    assert settings.llm_model == "qwen2.5:14b"
     assert settings.ollama_base_url == "http://localhost:11434"
     assert settings.corpus_dir == "data/sample"
 

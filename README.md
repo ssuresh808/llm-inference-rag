@@ -27,7 +27,7 @@ mindmap
         OpenAI embeddings
     Generation
       LLM factory
-        Ollama llama3.2 default free
+        Ollama qwen2.5 14b default free
         Anthropic Claude
         OpenAI
       Grounded cited answers
@@ -69,7 +69,7 @@ Prerequisites: Python 3.13, [uv](https://docs.astral.sh/uv/), and
 
 ```bash
 uv sync
-ollama pull llama3.2                 # one-time, ~2 GB
+ollama pull qwen2.5:14b              # one-time, ~9 GB (default LLM)
 
 # Retrieval only
 uv run python -m src.pipeline --query "How does paged attention manage the KV cache?"
@@ -101,7 +101,7 @@ decisions and their trade-offs live in **[docs/decisions.md](docs/decisions.md)*
 | Framework | LangChain |
 | Vector DB | Qdrant (local / in-memory) |
 | Embeddings | HuggingFace `bge-large` on Apple MPS (default) — swappable |
-| LLM | Ollama `llama3.2` (default) — swappable |
+| LLM | Ollama `qwen2.5:14b` on M4 (default) — swappable |
 | Corpus | `data/sample/` + HF `CShorten/ML-ArXiv-Papers` (filtered) |
 | API | FastAPI + Uvicorn |
 

@@ -73,14 +73,16 @@ every choice is defensible in an interview.
 
 - **Status:** Accepted
 - **Decision:** Default to **local HuggingFace / sentence-transformers**
-  embeddings (`BAAI/bge-small-en-v1.5`, 384-dim) via `langchain-huggingface`.
-  The backend is selected by one config value (`EMBEDDING_PROVIDER`) behind a
-  factory, so it can be swapped to a paid/hosted provider later with **no code
-  change** — just an env var (plus a re-index; see consequence).
+  embeddings (default `BAAI/bge-large-en-v1.5`, 1024-dim) via
+  `langchain-huggingface`, auto-placed on the best local device (MPS/CUDA/CPU;
+  see ADR-013). The backend is selected by one config value (`EMBEDDING_PROVIDER`)
+  behind a factory, so it can be swapped to a paid/hosted provider later with
+  **no code change** — just an env var (plus a re-index; see consequence).
 - **Why:** The requirement is "free, no cost, no API key, swappable later."
   Local sentence-transformers is genuinely free, needs no key or quota, runs on
-  CPU/Mac, and works offline (great for tests + reproducibility). bge-small is
-  strong for its size and fast to iterate on.
+  CPU/Mac, and works offline (great for tests + reproducibility). bge-large
+  maximizes retrieval quality on the available hardware; bge-small remains a
+  lighter, faster fallback.
 - **Why not NVIDIA NeMo Retriever as the default (the earlier pick):** It is not
   actually free — the hosted NVIDIA API catalog gives limited free *credits*
   then requires payment + a key, and self-hosted NIM needs an NVIDIA GPU (a Mac
@@ -181,3 +183,41 @@ always-on agents sandboxed in NVIDIA OpenShell. It is a *host-level
 agent-sandboxing runtime*, not a RAG/retrieval or embeddings component, so it
 adds nothing to a solo retrieval portfolio. Recorded here to close the loop:
 NemoClaw ≠ NeMo Retriever (ADR-003) — different product, similar "Nemo" naming.
+
+---
+
+## ADR-012: Corpus dataset — CShorten/ML-ArXiv-Papers (filtered)
+
+- **Status:** Accepted
+- **Decision:** Source the scaled corpus from the Hugging Face dataset
+  **`CShorten/ML-ArXiv-Papers`** (ML arXiv titles + abstracts), streamed and
+  **filtered by keyword** to the inference-optimization domain (ADR-000):
+  quantization, KV cache, attention, serving, latency, GPU, speculative
+  decoding, batching, parallelism, etc.
+- **Why:** Real, on-domain, citeable ML text at scale; streaming keeps it light;
+  keyword filtering keeps the corpus on the project's niche instead of all of ML.
+  The hand-written `data/sample/` corpus stays for fast, offline tests/CI.
+- **Alternatives considered:** full-text arXiv
+  (`AlgorithmicResearchGroup/arxiv_s2orc_parsed`) — heavier, full papers; ready-made
+  general QA sets (`rag-datasets/rag-mini-wikipedia`, `neural-bridge/rag-dataset-12000`)
+  — convenient eval but off-domain. `rag-mini-*` retained as a future eval dataset.
+- **Consequence:** Adds the `datasets` dependency. `src/ingestion/hf_datasets.py`
+  streams + filters into `Document`s (pure `rows_to_documents` unit-tested
+  offline). A 3,000-abstract slice produced ~6,300 indexed chunks.
+
+---
+
+## ADR-013: Local hardware acceleration (Apple Silicon / MPS)
+
+- **Status:** Accepted
+- **Decision:** Auto-detect the best local torch device for embeddings
+  (`EMBEDDING_DEVICE=auto` → MPS on Apple Silicon, else CUDA, else CPU), with a
+  configurable batch size and L2-normalized vectors. Default embedding model
+  upgraded to **`BAAI/bge-large-en-v1.5`** (1024-dim) to use available headroom.
+- **Why:** The target machine is an M4 with 24 GB unified memory; running
+  bge-large on Metal makes a meaningfully stronger retriever practical locally at
+  no cost, and batching improves indexing throughput.
+- **Consequence:** Larger embedding download (~1.3 GB) and higher memory use.
+  Verified: MPS detected and selected; 6,341 chunks embedded on-device. Changing
+  the embedding model changes the vector dimension, so re-indexing is required
+  (ADR-003).

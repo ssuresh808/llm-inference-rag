@@ -25,7 +25,9 @@ def test_settings_defaults_without_env(monkeypatch):
     assert settings.nvidia_api_key == ""
     assert settings.qdrant_url == ":memory:"
     assert settings.embedding_provider == "huggingface"
-    assert settings.embedding_model == "BAAI/bge-small-en-v1.5"
+    assert settings.embedding_model == "BAAI/bge-large-en-v1.5"
+    assert settings.embedding_device == "auto"
+    assert settings.embedding_batch_size == 64
     assert settings.qdrant_collection == "rag_portfolio"
     assert settings.llm_provider == "ollama"
     assert settings.llm_model == "llama3.2"

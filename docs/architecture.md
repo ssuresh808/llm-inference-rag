@@ -11,7 +11,7 @@ changes.
 ```mermaid
 flowchart TD
     subgraph INGEST["Ingestion — offline, one-time"]
-        A["Corpus: Markdown / PDF"] --> B["load_documents()"]
+        A["Corpus: Markdown / PDF / HF datasets"] --> B["load_documents()"]
         B --> C["RecursiveCharacterTextSplitter"]
         C --> D{"Quality gate: cleaned length >= 50?"}
         D -->|"reject"| X["Dropped (logged: processed / accepted / rejected)"]
@@ -20,7 +20,7 @@ flowchart TD
 
     subgraph INDEX["Indexing"]
         E --> F["Embeddings factory (EMBEDDING_PROVIDER)"]
-        F -->|"HuggingFace bge-small — default, free"| G[("Qdrant vector store")]
+        F -->|"HuggingFace bge-large on MPS — default, free"| G[("Qdrant vector store")]
         F -.->|"swap via env: NVIDIA / OpenAI"| G
     end
 
@@ -48,7 +48,7 @@ sequenceDiagram
     actor User
     participant API as FastAPI (/api/v1/answer)
     participant Eng as RetrievalEngine
-    participant Emb as Embeddings (bge-small)
+    participant Emb as Embeddings (bge-large, MPS)
     participant DB as Qdrant
     participant LLM as LLM (Ollama llama3.2)
 
@@ -86,7 +86,7 @@ hosted provider is a config change, not a code change.
 
 | Concern | Env var | Default (free) | Swap options |
 |---|---|---|---|
-| Embeddings | `EMBEDDING_PROVIDER` | `huggingface` (`bge-small`) | `nvidia`, `openai` |
+| Embeddings | `EMBEDDING_PROVIDER` | `huggingface` (`bge-large`, MPS) | `nvidia`, `openai` |
 | LLM | `LLM_PROVIDER` | `ollama` (`llama3.2`) | `anthropic`, `openai` |
 
 > Note: embedding providers emit different vector dimensions, so switching the

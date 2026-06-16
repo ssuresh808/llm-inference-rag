@@ -15,6 +15,26 @@ from src.config.settings import Settings, get_settings
 logger = logging.getLogger(__name__)
 
 
+def _resolve_device(preference: str) -> str:
+    """Resolve the torch device for local embeddings.
+
+    Args:
+        preference: ``"auto"``, ``"mps"``, ``"cuda"``, or ``"cpu"``.
+
+    Returns:
+        The concrete device string. ``"auto"`` prefers MPS, then CUDA, else CPU.
+    """
+    if preference != "auto":
+        return preference
+    import torch
+
+    if torch.backends.mps.is_available():
+        return "mps"
+    if torch.cuda.is_available():
+        return "cuda"
+    return "cpu"
+
+
 def build_embeddings(settings: Settings | None = None) -> Embeddings:
     """Return the embeddings backend named by ``settings.embedding_provider``.
 
@@ -48,7 +68,20 @@ def build_embeddings(settings: Settings | None = None) -> Embeddings:
                 "The 'huggingface' provider needs langchain-huggingface + "
                 "sentence-transformers. Install them or set EMBEDDING_PROVIDER."
             ) from exc
-        return HuggingFaceEmbeddings(model_name=settings.embedding_model)
+        device = _resolve_device(settings.embedding_device)
+        logger.info(
+            "HuggingFace embeddings on device=%s (batch_size=%d)",
+            device,
+            settings.embedding_batch_size,
+        )
+        return HuggingFaceEmbeddings(
+            model_name=settings.embedding_model,
+            model_kwargs={"device": device},
+            encode_kwargs={
+                "batch_size": settings.embedding_batch_size,
+                "normalize_embeddings": True,
+            },
+        )
 
     if provider == "openai":
         from langchain_openai import OpenAIEmbeddings

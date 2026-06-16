@@ -16,12 +16,13 @@ mindmap
   root((RAG Portfolio))
     Ingestion
       Markdown and PDF loaders
+      HuggingFace datasets corpus
       Recursive chunking
       Quality gate min 50 chars
     Retrieval
       Qdrant local store
       Embeddings factory
-        HuggingFace bge-small default free
+        HuggingFace bge-large on Metal default free
         NVIDIA NeMo Retriever
         OpenAI embeddings
     Generation
@@ -53,6 +54,8 @@ mindmap
   processed/accepted/rejected counts.
 - **Provider-agnostic embeddings and LLM** — one config value selects the backend
   behind a factory; integration packages are imported lazily.
+- **Real corpus from Hugging Face** — streams + filters `CShorten/ML-ArXiv-Papers`
+  to the inference-optimization domain; indexes on Apple Metal (MPS).
 - **Vector retrieval** over Qdrant with top-k similarity search.
 - **Grounded generation** — answers cite the source documents they used.
 - **HTTP API** (FastAPI): `/health`, `POST /api/v1/query`, `POST /api/v1/answer`.
@@ -97,8 +100,9 @@ decisions and their trade-offs live in **[docs/decisions.md](docs/decisions.md)*
 | Language / tooling | Python 3.13, uv, Ruff, Black, pytest |
 | Framework | LangChain |
 | Vector DB | Qdrant (local / in-memory) |
-| Embeddings | HuggingFace `bge-small` (default) — swappable |
+| Embeddings | HuggingFace `bge-large` on Apple MPS (default) — swappable |
 | LLM | Ollama `llama3.2` (default) — swappable |
+| Corpus | `data/sample/` + HF `CShorten/ML-ArXiv-Papers` (filtered) |
 | API | FastAPI + Uvicorn |
 
 ## Project status

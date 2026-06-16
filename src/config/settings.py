@@ -20,6 +20,9 @@ class Settings(BaseSettings):
             ``"openai"``. Swappable without code changes (see ADR-003).
         embedding_model: Model identifier for the active provider (a
             sentence-transformers repo id by default).
+        embedding_device: Torch device for local embeddings: "auto" (prefer
+            MPS/CUDA, else CPU) or an explicit "mps"/"cuda"/"cpu".
+        embedding_batch_size: Batch size for local embedding encoding.
         openai_api_key: API key for the OpenAI provider. Optional; only needed
             when ``embedding_provider == "openai"``.
         nvidia_api_key: API key for NVIDIA NeMo Retriever (hosted). Optional;
@@ -49,8 +52,16 @@ class Settings(BaseSettings):
         description="Embedding backend: 'huggingface' (local/free), 'nvidia', or 'openai'.",
     )
     embedding_model: str = Field(
-        default="BAAI/bge-small-en-v1.5",
+        default="BAAI/bge-large-en-v1.5",
         description="Model id for the active provider (HuggingFace repo id by default).",
+    )
+    embedding_device: str = Field(
+        default="auto",
+        description="Torch device for local embeddings: 'auto', 'mps', 'cuda', or 'cpu'.",
+    )
+    embedding_batch_size: int = Field(
+        default=64,
+        description="Batch size for local embedding encoding.",
     )
     openai_api_key: str = Field(
         default="", description="API key for the OpenAI provider (optional)."

@@ -1,0 +1,42 @@
+[
+  {
+    "question": "How does PagedAttention prevent GPU memory fragmentation?",
+    "relevant_sources": ["data/sample/paged-attention.md"]
+  },
+  {
+    "question": "Why does continuous batching improve GPU throughput?",
+    "relevant_sources": ["data/sample/continuous-batching.md"]
+  },
+  {
+    "question": "How does speculative decoding reduce latency without changing outputs?",
+    "relevant_sources": ["data/sample/speculative-decoding.md"]
+  },
+  {
+    "question": "What information does the KV cache store during generation?",
+    "relevant_sources": ["data/sample/kv-cache.md"]
+  },
+  {
+    "question": "How do GPTQ and AWQ shrink a model's memory footprint?",
+    "relevant_sources": ["data/sample/quantization.md"]
+  },
+  {
+    "question": "What does tensor parallelism shard across GPUs?",
+    "relevant_sources": ["data/sample/tensor-parallelism.md"]
+  },
+  {
+    "question": "What is FP8 quantization and which GPUs support it?",
+    "relevant_sources": ["data/sample/quantization.md"]
+  },
+  {
+    "question": "How are finished sequences swapped out of a running batch?",
+    "relevant_sources": ["data/sample/continuous-batching.md"]
+  },
+  {
+    "question": "Why does the KV cache dominate GPU memory at long context lengths?",
+    "relevant_sources": ["data/sample/kv-cache.md"]
+  },
+  {
+    "question": "What role does NVLink play in tensor parallelism?",
+    "relevant_sources": ["data/sample/tensor-parallelism.md"]
+  }
+]

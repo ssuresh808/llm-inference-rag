@@ -243,3 +243,28 @@ NemoClaw ≠ NeMo Retriever (ADR-003) — different product, similar "Nemo" nami
   relevance-aware metric (RAGAS / gold labels) to judge fairly.
 - **Consequence:** Adds `fastembed`; the reranker downloads `bge-reranker-base`
   (~1.1 GB) on first use and runs on MPS.
+
+---
+
+## ADR-015: On-domain corpus — arXiv metadata snapshot (Phase 2b)
+
+- **Status:** Implemented and verified.
+- **Decision:** Build the LLM-optimization corpus by **streaming**
+  `librarian-bots/arxiv-metadata-snapshot` and selecting papers by category
+  (`cs.CL`/`cs.AI`), recency (`update_date >= 2023-01-01`), and a **seed
+  vocabulary** (vLLM, PagedAttention, KV-cache, speculative decoding, continuous
+  batching, FlashAttention, quantization, GPU serving). Content = title +
+  abstract; metadata = id + authors (no PDF parsing). Index into an **isolated**
+  Qdrant collection `llm_optimization_domain` so the mini-wiki eval benchmark
+  stays intact.
+- **Why:** Fixes the off-domain problem (ADR-012). This snapshot is recent and
+  carries category + `update_date` metadata for precise filtering; the seed
+  vocabulary avoids the stat.ML "inference" collision. Unlike the older ML dumps,
+  it streams modern papers early (no oldest-first trap).
+- **Correction:** The originally-specified `Cornell-University/arxiv` does not
+  exist on the HF Hub; `librarian-bots/arxiv-metadata-snapshot` is the working,
+  recent equivalent with the same fields.
+- **Result:** 500 on-domain papers selected within a 200k-row scan → **1,477
+  chunks** indexed on MPS. Retrieval is precisely on-topic (KV-RM, KVServe,
+  KVDrive, ParisKV, …). Streaming + a 500-doc fail-safe keep memory bounded; the
+  pure selection transform is unit-tested offline (mocked stream).

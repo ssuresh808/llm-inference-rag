@@ -25,7 +25,9 @@ and deployment — strong enough to anchor a job-search portfolio. Primary signa
 - ✅ Hybrid (BM25) retrieval + cross-encoder reranking — **measured**
   ([experiments.md](experiments.md)): hybrid +0.045 MRR; reranking −0.119 MRR
   (metric mismatch, documented).
-- ⬜ Swap to an on-domain corpus (recent LLM-optimization papers).
+- ✅ On-domain corpus (Phase 2b): `librarian-bots/arxiv-metadata-snapshot`
+  filtered to recent LLM-optimization papers; isolated `llm_optimization_domain`
+  collection (500 papers → 1,477 chunks; retrieval verified on-topic).
 - ⬜ RAGAS generation metrics (faithfulness, answer/context relevancy) — also the
   fair way to re-judge reranking.
 - ⬜ Experiment tracking (Weights & Biases).
@@ -36,13 +38,11 @@ and deployment — strong enough to anchor a job-search portfolio. Primary signa
 
 ## Immediate next steps (priority order)
 
-1. **On-domain corpus (Phase 2b).** Replace the off-domain mini-wiki *demo*
-   corpus with recent LLM-optimization papers via `Cornell-University/arxiv`
-   (filter `cs.CL`/`cs.AI` + `update_date >= 2023`) or `cosmopedia`; use modern
-   seed vocabulary (vLLM, PagedAttention, KV-cache, speculative decoding,
-   FlashAttention). Keeps mini-wiki as the eval benchmark.
+1. ✅ **On-domain corpus (Phase 2b)** — done via
+   `librarian-bots/arxiv-metadata-snapshot` (category + date + seed-vocab filter)
+   into the isolated `llm_optimization_domain` collection.
 2. **RAGAS generation metrics** (LLM-judge via Ollama) — defensible answer-quality
-   numbers + a fair reranking re-evaluation.
+   numbers + a fair reranking re-evaluation. **(next)**
 3. **W&B** experiment tracking for the ablations.
 4. **Phase 3 deploy.** See open decision below.
 5. **Publish to GitHub** (currently local-only — see below).

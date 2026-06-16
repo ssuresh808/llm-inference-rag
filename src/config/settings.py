@@ -42,6 +42,9 @@ class Settings(BaseSettings):
         rerank: Enable cross-encoder reranking of retrieved candidates.
         reranker_model: Cross-encoder reranker model id.
         rerank_fetch_k: Number of candidates to fetch before reranking.
+        arxiv_dataset: HF dataset id for the on-domain arXiv corpus.
+        arxiv_collection: Qdrant collection for the LLM-optimization corpus.
+        arxiv_max_docs: Fail-safe cap on documents pulled from the arXiv stream.
     """
 
     model_config = SettingsConfigDict(
@@ -115,6 +118,18 @@ class Settings(BaseSettings):
     rerank_fetch_k: int = Field(
         default=20,
         description="Number of candidates to fetch before reranking.",
+    )
+    arxiv_dataset: str = Field(
+        default="librarian-bots/arxiv-metadata-snapshot",
+        description="HF dataset id for the on-domain arXiv corpus.",
+    )
+    arxiv_collection: str = Field(
+        default="llm_optimization_domain",
+        description="Qdrant collection for the LLM-optimization corpus.",
+    )
+    arxiv_max_docs: int = Field(
+        default=500,
+        description="Fail-safe cap on documents pulled from the arXiv stream.",
     )
 
 

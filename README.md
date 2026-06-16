@@ -54,8 +54,9 @@ mindmap
   processed/accepted/rejected counts.
 - **Provider-agnostic embeddings and LLM** — one config value selects the backend
   behind a factory; integration packages are imported lazily.
-- **Real corpus from Hugging Face** — streams + filters `CShorten/ML-ArXiv-Papers`
-  to the inference-optimization domain; indexes on Apple Metal (MPS).
+- **Real on-domain corpus from Hugging Face** — streams + filters
+  `librarian-bots/arxiv-metadata-snapshot` (category + date + seed vocabulary) to
+  recent LLM-optimization papers; indexes on Apple Metal (MPS).
 - **Vector retrieval** over Qdrant with top-k similarity search.
 - **Grounded generation** — answers cite the source documents they used.
 - **HTTP API** (FastAPI): `/health`, `POST /api/v1/query`, `POST /api/v1/answer`.
@@ -105,7 +106,7 @@ decisions and their trade-offs live in **[docs/decisions.md](docs/decisions.md)*
 | Vector DB | Qdrant (local / in-memory) |
 | Embeddings | HuggingFace `bge-large` on Apple MPS (default) — swappable |
 | LLM | Ollama `qwen2.5:14b` on M4 (default) — swappable |
-| Corpus | `data/sample/` + HF `CShorten/ML-ArXiv-Papers` (filtered) |
+| Corpus | `data/sample/` + HF arXiv snapshot (on-domain) + mini-wiki (eval) |
 | API | FastAPI + Uvicorn |
 
 ## Project status

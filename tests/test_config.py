@@ -37,6 +37,9 @@ def test_settings_defaults_without_env(monkeypatch):
     assert settings.rerank is False
     assert settings.reranker_model == "BAAI/bge-reranker-base"
     assert settings.rerank_fetch_k == 20
+    assert settings.arxiv_dataset == "librarian-bots/arxiv-metadata-snapshot"
+    assert settings.arxiv_collection == "llm_optimization_domain"
+    assert settings.arxiv_max_docs == 500
 
 
 def test_get_settings_is_cached():

@@ -1,6 +1,6 @@
 # Experiments
 
-## Retrieval ablation — rag-mini-wikipedia (Phase 2)
+## Retrieval ablation - rag-mini-wikipedia (Phase 2)
 
 **Setup:** 3,200 Wikipedia passages indexed; 300 factoid QA questions (yes/no and
 too-short answers excluded). Relevance = answer-string containment
@@ -18,7 +18,7 @@ cross-encoder, fetch 20 → top 5.
 
 - **Hybrid helps** (+0.045 MRR, +0.020 Hit@5 over dense). BM25's exact-term
   matching catches entity/number questions (dates, names) that dense embeddings
-  blur — precisely where lexical signal matters.
+  blur - precisely where lexical signal matters.
 - **Reranking hurt** on this metric (−0.119 MRR vs hybrid). The cross-encoder
   optimizes *semantic* relevance, but the proxy metric rewards *answer-string
   presence*. The reranker promotes topically-relevant-but-answerless passages
@@ -35,7 +35,7 @@ cross-encoder, fetch 20 → top 5.
 > Reproduce: hybrid/rerank are config-gated (`HYBRID`, `RERANK`). Numbers are
 > deterministic given the same corpus, gold sample, and models.
 
-## Generation eval — RAGAS, local judge (Phase 2c)
+## Generation eval - RAGAS, local judge (Phase 2c)
 
 **Setup:** on-domain arXiv corpus (`llm_optimization_domain`), 3 sample
 questions. Generator = `qwen2.5:14b` (Ollama); judge = `qwen2.5:14b` (Ollama);

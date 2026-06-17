@@ -14,7 +14,7 @@ every choice is defensible in an interview.
 
 - **Status:** Accepted
 - **Decision:** The RAG system retrieves over a curated corpus of **LLM
-  inference-optimization** material — vLLM, TensorRT-LLM, quantization
+  inference-optimization** material - vLLM, TensorRT-LLM, quantization
   (GPTQ/AWQ/FP8), KV-cache management, continuous batching, speculative
   decoding, and GPU serving cost/latency trade-offs (~20–50 high-signal public
   docs).
@@ -23,8 +23,8 @@ every choice is defensible in an interview.
   faster signals understanding *beneath* the model layer, not just prompting.
   It is also self-consistent with the project framing ("LLM Cost, Latency & GPU
   Optimization").
-- **Alternatives:** (a) arXiv ML papers — easy to source but generic and
-  over-used in portfolios; (b) personal resume/projects — memorable to
+- **Alternatives:** (a) arXiv ML papers - easy to source but generic and
+  over-used in portfolios; (b) personal resume/projects - memorable to
   recruiters but a corpus too small to support a credible retrieval/eval story.
 - **Consequence:** Corpus is technical, English, text-first (no OCR/licensing
   mess). Eval questions are concrete and verifiable, which strengthens the
@@ -32,7 +32,7 @@ every choice is defensible in an interview.
 
 ---
 
-## ADR-001: RAG framework — LangChain over LlamaIndex
+## ADR-001: RAG framework - LangChain over LlamaIndex
 
 - **Status:** Accepted
 - **Decision:** Standardize the whole project on **LangChain**.
@@ -53,7 +53,7 @@ every choice is defensible in an interview.
 
 ---
 
-## ADR-002: Vector DB — Qdrant (local, in-memory for Phase 1)
+## ADR-002: Vector DB - Qdrant (local, in-memory for Phase 1)
 
 - **Status:** Accepted
 - **Decision:** **Qdrant** in `:memory:` / local mode for Phase 1; same engine
@@ -69,7 +69,7 @@ every choice is defensible in an interview.
 
 ---
 
-## ADR-003: Embeddings — local HuggingFace default, provider-swappable
+## ADR-003: Embeddings - local HuggingFace default, provider-swappable
 
 - **Status:** Accepted
 - **Decision:** Default to **local HuggingFace / sentence-transformers**
@@ -77,14 +77,14 @@ every choice is defensible in an interview.
   `langchain-huggingface`, auto-placed on the best local device (MPS/CUDA/CPU;
   see ADR-013). The backend is selected by one config value (`EMBEDDING_PROVIDER`)
   behind a factory, so it can be swapped to a paid/hosted provider later with
-  **no code change** — just an env var (plus a re-index; see consequence).
+  **no code change** - just an env var (plus a re-index; see consequence).
 - **Why:** The requirement is "free, no cost, no API key, swappable later."
   Local sentence-transformers is genuinely free, needs no key or quota, runs on
   CPU/Mac, and works offline (great for tests + reproducibility). bge-large
   maximizes retrieval quality on the available hardware; bge-small remains a
   lighter, faster fallback.
 - **Why not NVIDIA NeMo Retriever as the default (the earlier pick):** It is not
-  actually free — the hosted NVIDIA API catalog gives limited free *credits*
+  actually free - the hosted NVIDIA API catalog gives limited free *credits*
   then requires payment + a key, and self-hosted NIM needs an NVIDIA GPU (a Mac
   has none). So NeMo Retriever becomes the **headline "when funded" upgrade and
   a Phase-2 ablation contender**, wired as a drop-in provider.
@@ -93,14 +93,14 @@ every choice is defensible in an interview.
   `Embeddings` object; nothing else changes.
 - **Consequence:** Providers emit different vector dimensions (bge-small 384,
   bge-base 768, OpenAI 3-small 1536, NeMo ~1024). **Switching providers requires
-  re-embedding the corpus into a fresh Qdrant collection** — embeddings are not
+  re-embedding the corpus into a fresh Qdrant collection** - embeddings are not
   hot-swappable. Step 3 adds `langchain-huggingface` + `sentence-transformers`
-  (pulls torch — a large install). Tests mock the embedding call, so none of
+  (pulls torch - a large install). Tests mock the embedding call, so none of
   this affects the suite.
 
 ---
 
-## ADR-004: Chunking — RecursiveCharacterTextSplitter for v1
+## ADR-004: Chunking - RecursiveCharacterTextSplitter for v1
 
 - **Status:** Accepted
 - **Decision:** **`RecursiveCharacterTextSplitter`** for the v1 pipeline.
@@ -141,16 +141,16 @@ every choice is defensible in an interview.
 
 ---
 
-## ADR-011: Agentic RAG — deferred to Phase 2 as a measured ablation
+## ADR-011: Agentic RAG - deferred to Phase 2 as a measured ablation
 
-- **Status:** Deferred — scoped now, built and evaluated in Phase 2, and
+- **Status:** Deferred - scoped now, built and evaluated in Phase 2, and
   promoted to the default path *only if* it beats the baseline on a metric.
 - **Decision:** Phase 1 stays **plain single-shot RAG** (retrieve → generate).
   Introduce an **agentic retrieval loop** in Phase 2 as an *ablation arm*, not
-  the default. Candidate pattern: **Corrective RAG (CRAG) / Self-RAG** — grade
+  the default. Candidate pattern: **Corrective RAG (CRAG) / Self-RAG** - grade
   the retrieved chunks and, on low confidence, rewrite the query and re-retrieve
   (or abstain) instead of answering from weak context.
-- **Why:** The corpus has a real failure mode single-shot RAG handles badly —
+- **Why:** The corpus has a real failure mode single-shot RAG handles badly - 
   multi-hop questions ("how does continuous batching interact with speculative
   decoding's latency?") and retrieved-but-irrelevant chunks. An agentic loop
   targets exactly that, and it realizes the agentic end-goal already committed
@@ -159,14 +159,14 @@ every choice is defensible in an interview.
   show an agent *helps* without a baseline + eval set to beat, and adding the
   loop now would confound the Phase-2 embedding × chunk ablation. (Project rule:
   ship working v1 before optimizing.)
-- **Substrate:** Built on **LangGraph** — the state-machine layer `deepagents`
-  itself sits on — so it stays inside the LangChain ecosystem from ADR-001 with
+- **Substrate:** Built on **LangGraph** - the state-machine layer `deepagents`
+  itself sits on - so it stays inside the LangChain ecosystem from ADR-001 with
   no new framework decision.
 - **Trade-off (the interview answer):** Agentic loops multiply LLM/embedding
   calls per query. On the ADR-006 default (local Ollama) that cost is mainly
   **latency/throughput**; on a paid provider it is **latency + dollars**. Either
   way it adds failure modes (retry loops, latency spikes) that hurt a live demo
-  — a reliable 1.5 s single-shot answer beats a flaky 8 s agentic one. The win
+ - a reliable 1.5 s single-shot answer beats a flaky 8 s agentic one. The win
   must be *earned*, not assumed.
 - **Success criterion:** Measured against the Phase-1 baseline on the RAGAS
   suite (ADR-009). Promote only on a defensible lift on multi-hop / low-context
@@ -178,15 +178,15 @@ every choice is defensible in an interview.
   ADR-006 provider factory. Logged now so the deferral is deliberate and
   defensible, not an omission.
 
-**Rejected for this project — NVIDIA NemoClaw:** an enterprise stack for running
+**Rejected for this project - NVIDIA NemoClaw:** an enterprise stack for running
 always-on agents sandboxed in NVIDIA OpenShell. It is a *host-level
 agent-sandboxing runtime*, not a RAG/retrieval or embeddings component, so it
 adds nothing to a solo retrieval portfolio. Recorded here to close the loop:
-NemoClaw ≠ NeMo Retriever (ADR-003) — different product, similar "Nemo" naming.
+NemoClaw ≠ NeMo Retriever (ADR-003) - different product, similar "Nemo" naming.
 
 ---
 
-## ADR-012: Corpus dataset — CShorten/ML-ArXiv-Papers (filtered)
+## ADR-012: Corpus dataset - CShorten/ML-ArXiv-Papers (filtered)
 
 - **Status:** Accepted
 - **Decision:** Source the scaled corpus from the Hugging Face dataset
@@ -198,9 +198,9 @@ NemoClaw ≠ NeMo Retriever (ADR-003) — different product, similar "Nemo" nami
   keyword filtering keeps the corpus on the project's niche instead of all of ML.
   The hand-written `data/sample/` corpus stays for fast, offline tests/CI.
 - **Alternatives considered:** full-text arXiv
-  (`AlgorithmicResearchGroup/arxiv_s2orc_parsed`) — heavier, full papers; ready-made
+  (`AlgorithmicResearchGroup/arxiv_s2orc_parsed`) - heavier, full papers; ready-made
   general QA sets (`rag-datasets/rag-mini-wikipedia`, `neural-bridge/rag-dataset-12000`)
-  — convenient eval but off-domain. `rag-mini-*` retained as a future eval dataset.
+ - convenient eval but off-domain. `rag-mini-*` retained as a future eval dataset.
 - **Consequence:** Adds the `datasets` dependency. `src/ingestion/hf_datasets.py`
   streams + filters into `Document`s (pure `rows_to_documents` unit-tested
   offline). A 3,000-abstract slice produced ~6,300 indexed chunks.
@@ -236,7 +236,7 @@ NemoClaw ≠ NeMo Retriever (ADR-003) — different product, similar "Nemo" nami
 - **Why:** The two highest-leverage retrieval-quality levers. Evaluated against
   the rag-mini-wikipedia answer-recall benchmark (ADR built on real ground
   truth, not a demo).
-- **Result:** Hybrid **+0.045 MRR / +0.020 Hit@5** over dense — ship it.
+- **Result:** Hybrid **+0.045 MRR / +0.020 Hit@5** over dense - ship it.
   Reranking **−0.119 MRR** on the answer-containment metric: the cross-encoder
   optimizes semantic relevance while the proxy rewards answer presence
   (objective/metric mismatch). Kept in code, off by default; needs a
@@ -246,7 +246,7 @@ NemoClaw ≠ NeMo Retriever (ADR-003) — different product, similar "Nemo" nami
 
 ---
 
-## ADR-015: On-domain corpus — arXiv metadata snapshot (Phase 2b)
+## ADR-015: On-domain corpus - arXiv metadata snapshot (Phase 2b)
 
 - **Status:** Implemented and verified.
 - **Decision:** Build the LLM-optimization corpus by **streaming**
@@ -271,14 +271,14 @@ NemoClaw ≠ NeMo Retriever (ADR-003) — different product, similar "Nemo" nami
 
 ---
 
-## ADR-016: RAGAS evaluation judge — local-default, hosted-fallback
+## ADR-016: RAGAS evaluation judge - local-default, hosted-fallback
 
 - **Status:** Implemented (Phase 2c).
 - **Decision:** Measure generation quality with RAGAS (**faithfulness**,
   **answer_relevancy**). The judge LLM is config-selected via
   `RAGAS_JUDGE_PROVIDER` (default `ollama` → qwen2.5:14b, swappable to
   `openai`/`anthropic` through the existing provider factories); RAGAS embeddings
-  reuse local `bge-large`. The eval loop is **NaN-tolerant** — malformed
+  reuse local `bge-large`. The eval loop is **NaN-tolerant** - malformed
   local-judge output is logged and returned as NaN, never crashes.
 - **Why:** Keep the RAG *application* fully local and free, while acknowledging
   that RAGAS's metric prompts demand strict JSON-schema adherence that local
@@ -287,14 +287,14 @@ NemoClaw ≠ NeMo Retriever (ADR-003) — different product, similar "Nemo" nami
   on a paid API.
 - **Trade-off:** local judge = free + private but noisy/partial (NaN) and slow
   (many LLM calls per question); hosted judge = clean numbers but paid +
-  external — used *only* for the evaluation step.
+  external - used *only* for the evaluation step.
 - **Consequence:** Adds `ragas`; its imports are lazy so the module and its tests
   load without it and make no network/GPU calls. The default judge path makes no
   external API calls (no OpenAI leakage).
 
 ---
 
-## ADR-017: Experiment tracking — Weights & Biases (optional, diagnostic)
+## ADR-017: Experiment tracking - Weights & Biases (optional, diagnostic)
 
 - **Status:** Implemented (Phase 2, final step).
 - **Decision:** Optional W&B logging gated by `ENABLE_WANDB` (default **False**).
@@ -305,7 +305,7 @@ NemoClaw ≠ NeMo Retriever (ADR-003) — different product, similar "Nemo" nami
   Failures" `wandb.Table` (question, generated_answer, raw_judge_output,
   failed_metric) track evaluation *health* separately from RAG performance.
 - **Why:** Experiment tracking + run comparison for the eval ablations, without
-  ever forcing a login. **Quiet by default** — when disabled, `wandb` is never
+  ever forcing a login. **Quiet by default** - when disabled, `wandb` is never
   imported.
 - **Constraint honored:** strictly a diagnostic wrapper; the retrieval engine and
   DB are untouched. `wandb` is imported lazily (mockable; tests run offline with
@@ -318,10 +318,10 @@ NemoClaw ≠ NeMo Retriever (ADR-003) — different product, similar "Nemo" nami
 
 ## ADR-018: Agentic generation (LangGraph ReAct) behind a feature flag
 
-- **Status:** Implemented (Phase 3) — **default OFF**.
-- **Decision:** Introduce an agentic generation path — a **LangGraph
+- **Status:** Implemented (Phase 3) - **default OFF**.
+- **Decision:** Introduce an agentic generation path - a **LangGraph
   `create_react_agent`** plus a `search_arxiv_literature` tool over the Qdrant
-  engine, driven by local `qwen2.5:14b` (or the hosted fallback) — gated by
+  engine, driven by local `qwen2.5:14b` (or the hosted fallback) - gated by
   `GENERATION_MODE` (`single` | `agent`, default `single`). The single-shot
   `answer_question` stays the default, RAGAS-measured baseline and is
   **untouched**. The `/api/v1/answer` endpoint routes on the flag; both paths
@@ -333,13 +333,13 @@ NemoClaw ≠ NeMo Retriever (ADR-003) — different product, similar "Nemo" nami
   produced off-topic output. A control test confirmed qwen *does* call the same
   tool reliably in a lightweight harness. We therefore migrated to **LangGraph
   ReAct**, a lighter, more reliable tool-calling harness for 14B-parameter local
-  models — preserving the strict **local-first, privacy-preserving** constraint
+  models - preserving the strict **local-first, privacy-preserving** constraint
   (no hosted model required for the agent to work).
 - **Why a flag:** ADR-011 requires promoting the agent to default **only if it
   beats the baseline on a metric**. The flag enables side-by-side RAGAS
   evaluation (single vs agent) before promotion, protecting the
   defensible-numbers thesis and avoiding an unmeasured regression on the demo.
-- **Consequence:** Adds `langgraph`; `deepagents` was removed. Imports are lazy —
+- **Consequence:** Adds `langgraph`; `deepagents` was removed. Imports are lazy - 
   the default single path never constructs an agent. Tests cover the retrieval
   tool, answer extraction (dict + `AIMessage`), and routing; the live tool-call
   behavior was validated by smoke test.

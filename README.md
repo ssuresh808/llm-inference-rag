@@ -2,7 +2,7 @@
 
 A production-minded Retrieval-Augmented Generation system that answers questions
 about **LLM inference optimization** (vLLM, quantization, KV-cache, continuous
-batching, speculative decoding) over a curated arXiv corpus — with an autonomous
+batching, speculative decoding) over a curated arXiv corpus - with an autonomous
 agent that plans and actively searches, every claim traced to its source.
 
 Runs **fully local and free** (local embeddings + a local LLM); every provider is
@@ -22,7 +22,7 @@ It demonstrates end-to-end ML-engineering judgment, not a toy demo:
 - **Honest engineering.** A live test caught a failing agent framework; the fix
   (and the reasoning) is documented as an ADR rather than hidden.
 - **Provider-agnostic by design.** Free local-first default, one-line swap to
-  NVIDIA / OpenAI / Anthropic — built for the "when funded" upgrade path.
+  NVIDIA / OpenAI / Anthropic - built for the "when funded" upgrade path.
 - **Actually ships.** Multi-stage Docker, docker-compose, and CI; verified with a
   live containerized integration test against host-native Ollama.
 
@@ -30,7 +30,7 @@ It demonstrates end-to-end ML-engineering judgment, not a toy demo:
 
 ## Results (real, reproducible numbers)
 
-### Retrieval ablation — `rag-mini-wikipedia`, 300 factoid QA (answer-recall@k)
+### Retrieval ablation - `rag-mini-wikipedia`, 300 factoid QA (answer-recall@k)
 
 | Config | Hit@5 | MRR | Recall@5 |
 |---|---|---|---|
@@ -40,11 +40,11 @@ It demonstrates end-to-end ML-engineering judgment, not a toy demo:
 
 **Hybrid wins** (+0.045 MRR): BM25's exact-term matching catches the
 entity/number questions dense embeddings blur. **Reranking hurt on this metric**
-— a documented objective/metric mismatch (the cross-encoder optimizes semantic
+ - a documented objective/metric mismatch (the cross-encoder optimizes semantic
 relevance; the proxy rewards answer-string presence), not a code defect. See
 [docs/experiments.md](docs/experiments.md).
 
-### Generation eval — RAGAS, fully local judge (`qwen2.5:14b`)
+### Generation eval - RAGAS, fully local judge (`qwen2.5:14b`)
 
 | Metric | Score |
 |---|---|
@@ -53,7 +53,7 @@ relevance; the proxy rewards answer-string presence), not a code defect. See
 
 Real local-judge numbers over the on-domain arXiv corpus. The loop is
 **NaN-tolerant** with a hosted-judge fallback (`RAGAS_JUDGE_PROVIDER`) for
-cleaner numbers without making the app depend on a paid API — see
+cleaner numbers without making the app depend on a paid API - see
 [ADR-016](docs/decisions.md).
 
 ---
@@ -80,7 +80,7 @@ flowchart LR
   quality gate (min length, whitespace normalization).
 - **Retrieval** is `bge-large` dense + optional BM25 hybrid + optional
   cross-encoder rerank, over a **persistent on-disk Qdrant** collection
-  (`llm_optimization_domain`) — seeded once, reused across runs.
+  (`llm_optimization_domain`) - seeded once, reused across runs.
 - **Generation** is config-gated (`GENERATION_MODE`): a RAGAS-measured
   single-shot baseline (default), or a **LangGraph ReAct agent** that decides
   when to search and cites what it used.
@@ -90,7 +90,7 @@ Full workflow + sequence diagrams: [docs/architecture.md](docs/architecture.md).
 ### Key decision: deepagents → LangGraph ReAct ([ADR-018](docs/decisions.md))
 
 The agent was first built on `deepagents`. A live smoke test showed its heavy
-built-in middleware overwhelmed the local 14B model — it never called the search
+built-in middleware overwhelmed the local 14B model - it never called the search
 tool and hallucinated off-topic output. A control test confirmed the same model
 calls tools reliably in a lighter harness, so I migrated to LangGraph's
 `create_react_agent`. This preserved the **local-first, privacy-preserving**
@@ -117,7 +117,7 @@ docker compose up
 ```
 
 - **UI:** http://localhost:8501
-- **API:** http://localhost:8000 — `POST /api/v1/answer` `{"text": "...", "top_k": 5}`
+- **API:** http://localhost:8000 - `POST /api/v1/answer` `{"text": "...", "top_k": 5}`
 
 The backend reaches host Ollama via `host.docker.internal:11434` and mounts the
 seeded `./.qdrant_storage` as a volume (no re-ingestion on startup). To use the
@@ -154,7 +154,7 @@ ENABLE_WANDB=true uv run python -m scripts.run_ragas_sample    # log to Weights 
 
 ## Terminal-native infrastructure & CI/CD
 
-The cloud path is driven entirely from the terminal — no dashboard click-ops:
+The cloud path is driven entirely from the terminal - no dashboard click-ops:
 
 ```bash
 scripts/provision_qdrant.sh   # guided qcloud free-tier cluster + app key -> .env.cloud
@@ -162,14 +162,14 @@ scripts/deploy_render.sh      # validate render.yaml, push the Blueprint (GitOps
 uv run python scripts/verify_prod.py https://<backend>.onrender.com
 ```
 
-- **`provision_qdrant.sh`** — prints the exact `qcloud` commands to stand up a
+- **`provision_qdrant.sh`** - prints the exact `qcloud` commands to stand up a
   free-tier Qdrant Cloud cluster and shows where to paste the URL/key.
-- **`deploy_render.sh`** — validates `render.yaml` locally, then `git push`es so
+- **`deploy_render.sh`** - validates `render.yaml` locally, then `git push`es so
   Render syncs the Blueprint. (Heads-up: the npm `render` template tool is *not*
-  the Render.com CLI — install `render-oss`.)
-- **`verify_prod.py`** — post-deploy smoke test: hits `/health`, then
+  the Render.com CLI - install `render-oss`.)
+- **`verify_prod.py`** - post-deploy smoke test: hits `/health`, then
   `POST /api/v1/answer`, and **fails loudly unless the response carries both an
-  answer and sources** — proving Qdrant Cloud and the hosted LLM are wired
+  answer and sources** - proving Qdrant Cloud and the hosted LLM are wired
   together.
 - **CI** ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs
   `ruff check .` plus the full pytest suite on every push/PR to `main`.

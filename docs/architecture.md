@@ -1,7 +1,7 @@
 # Architecture
 
-The system has two execution paths — an **indexing** path (offline, one-time per
-corpus) and a **query** path (per request) — plus an **evaluation** harness that
+The system has two execution paths - an **indexing** path (offline, one-time per
+corpus) and a **query** path (per request) - plus an **evaluation** harness that
 measures retrieval quality against a gold set. Embeddings and the LLM are chosen
 by configuration behind factories, so providers are swappable without code
 changes.
@@ -10,7 +10,7 @@ changes.
 
 ```mermaid
 flowchart TD
-    subgraph INGEST["Ingestion — offline, one-time"]
+    subgraph INGEST["Ingestion - offline, one-time"]
         A["Corpus: Markdown / PDF / HF datasets"] --> B["load_documents()"]
         B --> C["RecursiveCharacterTextSplitter"]
         C --> D{"Quality gate: cleaned length >= 50?"}
@@ -20,17 +20,17 @@ flowchart TD
 
     subgraph INDEX["Indexing"]
         E --> F["Embeddings factory (EMBEDDING_PROVIDER)"]
-        F -->|"HuggingFace bge-large on MPS — default, free"| G[("Qdrant vector store")]
+        F -->|"HuggingFace bge-large on MPS - default, free"| G[("Qdrant vector store")]
         F -.->|"swap via env: NVIDIA / OpenAI"| G
     end
 
-    subgraph QUERY["Query time — per request"]
+    subgraph QUERY["Query time - per request"]
         Q["User question"] --> H["FastAPI: POST /api/v1/answer"]
         H --> I["Embed query + similarity search (top-k)"]
         G --> I
         I --> J["Assemble cited context"]
         J --> K["LLM factory (LLM_PROVIDER)"]
-        K -->|"Ollama qwen2.5:14b — default, free"| L["Grounded answer + sources"]
+        K -->|"Ollama qwen2.5:14b - default, free"| L["Grounded answer + sources"]
         K -.->|"swap via env: Claude / OpenAI"| L
     end
 

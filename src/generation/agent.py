@@ -10,6 +10,7 @@ and its tests load without constructing an agent and make no network/GPU calls.
 """
 
 import logging
+from pathlib import Path
 
 from langchain_core.documents import Document
 from langchain_core.tools import BaseTool, tool
@@ -20,6 +21,34 @@ from src.retrieval.engine import RetrievalEngine, build_engine
 
 logger = logging.getLogger(__name__)
 
+#: Directory of Markdown analysis "skills" the agent can load on demand.
+SKILLS_DIR = (Path(__file__).resolve().parent.parent / "skills").resolve()
+
+#: Stable default checkpointer thread id (gives the demo a single memory thread).
+DEFAULT_THREAD_ID = "portfolio-default-thread"
+
+
+@tool
+def read_agent_skill(skill_name: str) -> str:
+    """Load a named analysis skill (a Markdown playbook) to guide reasoning.
+
+    Use for evaluative/comparison questions to load reusable analysis guidance
+    before answering (e.g. ``"critical_analysis"``).
+
+    Args:
+        skill_name: Bare skill name, no path or extension (e.g. ``critical_analysis``).
+
+    Returns:
+        The skill's Markdown content, or a message listing available skills if
+        the name is unknown. Reads are sandboxed to the skills directory.
+    """
+    target = (SKILLS_DIR / f"{Path(skill_name).stem}.md").resolve()
+    if SKILLS_DIR not in target.parents or not target.is_file():
+        available = sorted(path.stem for path in SKILLS_DIR.glob("*.md"))
+        return f"Unknown skill '{skill_name}'. Available skills: {', '.join(available) or 'none'}."
+    return target.read_text(encoding="utf-8")
+
+
 AGENT_INSTRUCTIONS = (
     "You are an expert assistant on LLM inference optimization (vLLM, "
     "TensorRT-LLM, quantization, KV-cache, continuous batching, speculative "
@@ -29,7 +58,9 @@ AGENT_INSTRUCTIONS = (
     "write any answer. Never answer from memory. If the question has multiple "
     "parts, search for each part. Base your synthesis ONLY on the passages the "
     "tool returns, and cite the source ids you used. If the tool returns nothing "
-    "relevant, say so plainly rather than guessing."
+    "relevant, say so plainly rather than guessing.\n\n"
+    "For evaluative or comparison questions, you may first call "
+    "`read_agent_skill('critical_analysis')` to load an analysis playbook."
 )
 
 
@@ -80,14 +111,23 @@ def build_react_agent(tools: list[BaseTool], settings: Settings | None = None) -
         settings: Configuration. Defaults to ``get_settings()``.
 
     Returns:
-        A compiled LangGraph agent, invoked with ``{"messages": [...]}``.
+        A compiled LangGraph agent, invoked with ``{"messages": [...]}`` and a
+        ``configurable.thread_id``. A ``MemorySaver`` checkpointer makes the run
+        checkpoint-capable (per-thread state); cross-turn memory requires a
+        stable ``thread_id``, which the single-shot API does not yet expose.
     """
     settings = settings or get_settings()
+    from langgraph.checkpoint.memory import MemorySaver
     from langgraph.prebuilt import create_react_agent
 
     from src.generation.llm import build_llm
 
-    return create_react_agent(build_llm(settings), tools, prompt=AGENT_INSTRUCTIONS)
+    return create_react_agent(
+        build_llm(settings),
+        tools,
+        prompt=AGENT_INSTRUCTIONS,
+        checkpointer=MemorySaver(),
+    )
 
 
 def _extract_final_text(result: object) -> str:
@@ -107,8 +147,9 @@ def agentic_answer_question(
     agent: object | None = None,
     top_k: int = 5,
     settings: Settings | None = None,
+    thread_id: str | None = None,
 ) -> RagAnswer:
-    """Answer ``question`` with the deep agent, returning the baseline schema.
+    """Answer ``question`` with the ReAct agent, returning the baseline schema.
 
     The agent decides when/what to search; retrieved documents are captured for
     citations so the output matches :class:`RagAnswer` exactly (answer + sources
@@ -120,6 +161,8 @@ def agentic_answer_question(
         agent: Pre-built agent (injected in tests). Defaults to a fresh agent.
         top_k: Passages per tool call.
         settings: Configuration. Defaults to ``get_settings()``.
+        thread_id: Checkpointer thread id. Defaults to ``DEFAULT_THREAD_ID``;
+            pass a per-conversation id to isolate agent memory across callers.
 
     Returns:
         A ``RagAnswer`` with the agent's synthesis, cited sources, and chunks.
@@ -129,9 +172,10 @@ def agentic_answer_question(
     collected: list[Document] = []
     search_tool = _make_search_tool(engine, top_k, collected)
     if agent is None:
-        agent = build_react_agent([search_tool], settings)
+        agent = build_react_agent([search_tool, read_agent_skill], settings)
 
-    result = agent.invoke({"messages": [{"role": "user", "content": question}]})
+    config = {"configurable": {"thread_id": thread_id or DEFAULT_THREAD_ID}}
+    result = agent.invoke({"messages": [{"role": "user", "content": question}]}, config=config)
     answer_text = _extract_final_text(result)
     sources = list(
         dict.fromkeys(

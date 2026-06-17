@@ -32,6 +32,9 @@ class Settings(BaseSettings):
             store (Phase 1 default) or an ``http(s)://host:port`` URL for a
             running Qdrant instance.
         qdrant_path: Local on-disk Qdrant storage path; empty = in-memory.
+        qdrant_cloud_url: Qdrant Cloud cluster URL; with ``qdrant_api_key`` set,
+            the engine connects to the remote cluster instead of local storage.
+        qdrant_api_key: API key for the Qdrant Cloud cluster.
         qdrant_collection: Name of the Qdrant collection holding the corpus.
         llm_provider: LLM backend. One of ``"ollama"`` (local, free — default),
             ``"anthropic"``, or ``"openai"``. Swappable via config (ADR-006).
@@ -93,6 +96,13 @@ class Settings(BaseSettings):
     qdrant_path: str = Field(
         default="",
         description="Local on-disk Qdrant storage path; empty string = in-memory.",
+    )
+    qdrant_cloud_url: str = Field(
+        default="",
+        description="Qdrant Cloud cluster URL; with qdrant_api_key, overrides local storage.",
+    )
+    qdrant_api_key: str = Field(
+        default="", description="API key for the Qdrant Cloud cluster (optional)."
     )
     qdrant_collection: str = Field(
         default="rag_portfolio",

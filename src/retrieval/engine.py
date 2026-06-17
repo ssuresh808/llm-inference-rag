@@ -31,6 +31,8 @@ class RetrievalEngine:
         collection_name: str = "rag_portfolio",
         qdrant_url: str = ":memory:",
         qdrant_path: str = "",
+        qdrant_cloud_url: str = "",
+        qdrant_api_key: str = "",
         sparse_embeddings: object | None = None,
         reranker: object | None = None,
         rerank_fetch_k: int = DEFAULT_RERANK_FETCH_K,
@@ -43,6 +45,9 @@ class RetrievalEngine:
             qdrant_url: ``":memory:"`` for a local store, else an ``http`` URL.
             qdrant_path: On-disk Qdrant storage path; when set, takes precedence
                 over ``qdrant_url`` and persists the collection between runs.
+            qdrant_cloud_url: Qdrant Cloud cluster URL; with ``qdrant_api_key``
+                set, takes precedence over all local options.
+            qdrant_api_key: API key for the Qdrant Cloud cluster.
             sparse_embeddings: Optional sparse (BM25) embedding; when provided,
                 indexing/retrieval use Qdrant hybrid mode.
             reranker: Optional object with ``rerank(query, docs, top_k)``; when
@@ -56,10 +61,18 @@ class RetrievalEngine:
         self._collection_name = collection_name
         self._qdrant_url = qdrant_url
         self._qdrant_path = qdrant_path
+        self._qdrant_cloud_url = qdrant_cloud_url
+        self._qdrant_api_key = qdrant_api_key
         self._vector_store: QdrantVectorStore | None = None
 
     def _client_kwargs(self) -> dict:
-        """Return Qdrant client kwargs for the configured storage location."""
+        """Return Qdrant client kwargs for the configured storage location.
+
+        Precedence: Qdrant Cloud (url + api_key) > on-disk path > in-memory >
+        plain URL.
+        """
+        if self._qdrant_cloud_url and self._qdrant_api_key:
+            return {"url": self._qdrant_cloud_url, "api_key": self._qdrant_api_key}
         if self._qdrant_path:
             return {"path": self._qdrant_path}
         if self._qdrant_url == ":memory:":
@@ -177,6 +190,8 @@ def build_engine(settings: Settings | None = None) -> RetrievalEngine:
         collection_name=settings.qdrant_collection,
         qdrant_url=settings.qdrant_url,
         qdrant_path=settings.qdrant_path,
+        qdrant_cloud_url=settings.qdrant_cloud_url,
+        qdrant_api_key=settings.qdrant_api_key,
         sparse_embeddings=sparse,
         reranker=reranker,
         rerank_fetch_k=settings.rerank_fetch_k,

@@ -21,6 +21,7 @@ dependencies = [
     "datasets>=3.0",
     "fastembed>=0.4",
     "ragas>=0.2",
+    "wandb>=0.18",
 ]
 
 [dependency-groups]

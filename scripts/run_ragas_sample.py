@@ -12,6 +12,7 @@ import logging
 
 from src.config.settings import get_settings
 from src.evaluation.ragas_eval import evaluate_generation
+from src.evaluation.tracking import log_evaluation, summarize_result
 from src.retrieval.embeddings import build_embeddings
 from src.retrieval.engine import RetrievalEngine
 
@@ -20,6 +21,7 @@ QUESTIONS = [
     "What is speculative decoding and how does it reduce latency?",
     "How does KV-cache quantization reduce GPU memory use?",
 ]
+TOP_K = 5
 
 
 def main() -> None:
@@ -39,11 +41,22 @@ def main() -> None:
         f"Evaluating {len(QUESTIONS)} questions against "
         f"'{settings.arxiv_collection}' (judge={settings.ragas_judge_provider})...\n"
     )
-    result = evaluate_generation(QUESTIONS, engine=engine)
+    result = evaluate_generation(QUESTIONS, engine=engine, top_k=TOP_K)
     engine.close()
 
     print("RAGAS result:")
     print(result)
+
+    scores, failures = summarize_result(result, QUESTIONS)
+    config = {
+        "retriever_top_k": TOP_K,
+        "embedding_model": settings.embedding_model,
+        "llm_judge_model": settings.ragas_judge_model or settings.llm_model,
+        "collection_name": settings.arxiv_collection,
+    }
+    log_evaluation(scores, failures, config)
+    if settings.enable_wandb:
+        print(f"\nLogged to W&B project '{settings.wandb_project}'.")
 
 
 if __name__ == "__main__":

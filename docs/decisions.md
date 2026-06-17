@@ -291,3 +291,25 @@ NemoClaw ≠ NeMo Retriever (ADR-003) — different product, similar "Nemo" nami
 - **Consequence:** Adds `ragas`; its imports are lazy so the module and its tests
   load without it and make no network/GPU calls. The default judge path makes no
   external API calls (no OpenAI leakage).
+
+---
+
+## ADR-017: Experiment tracking — Weights & Biases (optional, diagnostic)
+
+- **Status:** Implemented (Phase 2, final step).
+- **Decision:** Optional W&B logging gated by `ENABLE_WANDB` (default **False**).
+  Logs pipeline hyperparameters (`retriever_top_k`, `embedding_model`,
+  `llm_judge_model`, `collection_name`) as the run config and aggregate RAGAS
+  scores via `wandb.log`. **NaN metrics are filtered** from the performance
+  charts; instead an `eval/judge_parser_failures` counter and an "Evaluation
+  Failures" `wandb.Table` (question, generated_answer, raw_judge_output,
+  failed_metric) track evaluation *health* separately from RAG performance.
+- **Why:** Experiment tracking + run comparison for the eval ablations, without
+  ever forcing a login. **Quiet by default** — when disabled, `wandb` is never
+  imported.
+- **Constraint honored:** strictly a diagnostic wrapper; the retrieval engine and
+  DB are untouched. `wandb` is imported lazily (mockable; tests run offline with
+  no API key).
+- **Limitation:** RAGAS does not expose per-question raw judge text on a parse
+  failure, so `raw_judge_output` carries the parser error string (total-failure
+  case) and is empty for per-row NaNs.

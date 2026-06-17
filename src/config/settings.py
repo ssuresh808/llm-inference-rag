@@ -48,6 +48,9 @@ class Settings(BaseSettings):
         arxiv_max_docs: Fail-safe cap on documents pulled from the arXiv stream.
         ragas_judge_provider: LLM provider for the RAGAS judge (ollama/openai/anthropic).
         ragas_judge_model: Model id for the RAGAS judge; empty = use llm_model.
+        enable_wandb: When True, log evaluation runs to Weights & Biases.
+        wandb_project: Weights & Biases project name.
+        wandb_entity: Weights & Biases entity (team/user); empty = default account.
     """
 
     model_config = SettingsConfigDict(
@@ -145,6 +148,18 @@ class Settings(BaseSettings):
     ragas_judge_model: str = Field(
         default="",
         description="Model id for the RAGAS judge; empty = fall back to llm_model.",
+    )
+    enable_wandb: bool = Field(
+        default=False,
+        description="When True, log evaluation runs to Weights & Biases.",
+    )
+    wandb_project: str = Field(
+        default="llm-rag-inference",
+        description="Weights & Biases project name.",
+    )
+    wandb_entity: str = Field(
+        default="",
+        description="Weights & Biases entity (team/user); empty = default account.",
     )
 
 

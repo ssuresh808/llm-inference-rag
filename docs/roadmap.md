@@ -31,7 +31,9 @@ and deployment — strong enough to anchor a job-search portfolio. Primary signa
 - ✅ RAGAS generation metrics (Phase 2c): local qwen2.5:14b judge + bge-large,
   NaN-tolerant, hosted-judge fallback (`RAGAS_JUDGE_PROVIDER`). Sample:
   faithfulness 0.48, answer_relevancy 0.65 (local judge; see experiments.md).
-- ⬜ Experiment tracking (Weights & Biases).
+- ✅ Experiment tracking (Weights & Biases): optional `ENABLE_WANDB` wrapper —
+  logs hyperparameters + RAGAS scores, NaN-filtered with a failure counter +
+  debug table (ADR-017). **Phase 2 complete.**
 
 **Phase 3 — Ship: ⬜ not started**
 - Frontend (chat UI), Docker, CI (GitHub Actions: ruff + pytest), deployment to a

@@ -152,6 +152,34 @@ ENABLE_WANDB=true uv run python -m scripts.run_ragas_sample    # log to Weights 
 
 ---
 
+## Terminal-native infrastructure & CI/CD
+
+The cloud path is driven entirely from the terminal — no dashboard click-ops:
+
+```bash
+scripts/provision_qdrant.sh   # guided qcloud free-tier cluster + app key -> .env.cloud
+scripts/deploy_render.sh      # validate render.yaml, push the Blueprint (GitOps auto-deploy)
+uv run python scripts/verify_prod.py https://<backend>.onrender.com
+```
+
+- **`provision_qdrant.sh`** — prints the exact `qcloud` commands to stand up a
+  free-tier Qdrant Cloud cluster and shows where to paste the URL/key.
+- **`deploy_render.sh`** — validates `render.yaml` locally, then `git push`es so
+  Render syncs the Blueprint. (Heads-up: the npm `render` template tool is *not*
+  the Render.com CLI — install `render-oss`.)
+- **`verify_prod.py`** — post-deploy smoke test: hits `/health`, then
+  `POST /api/v1/answer`, and **fails loudly unless the response carries both an
+  answer and sources** — proving Qdrant Cloud and the hosted LLM are wired
+  together.
+- **CI** ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs
+  `ruff check .` plus the full pytest suite on every push/PR to `main`.
+
+Local runs fall back to the on-disk `./.qdrant_storage`; setting
+`QDRANT_CLOUD_URL` + `QDRANT_API_KEY` (see [`.env.cloud.example`](.env.cloud.example))
+flips retrieval to Qdrant Cloud with no code change.
+
+---
+
 ## Project layout
 
 ```
@@ -162,7 +190,7 @@ src/
   evaluation/    RAGAS generation eval + W&B tracking
   api/           FastAPI app (/health, /api/v1/query, /api/v1/answer)
   frontend/      Streamlit UI (answer + citation ledger)
-scripts/         seed the DB, run RAGAS
+scripts/         seed DB, run RAGAS, provision Qdrant, deploy Render, verify prod
 docs/            ADRs (decisions.md), experiments.md, architecture.md, roadmap.md
 ```
 

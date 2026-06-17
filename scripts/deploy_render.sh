@@ -1,32 +1,22 @@
 #!/usr/bin/env bash
 # Render GitOps deploy for the RAG Blueprint (render.yaml).
 #
-# HEADS UP: a tool named `render` (npm "render-cli", a template engine) may
-# shadow your PATH — that is NOT the Render.com CLI and has no `blueprints`
-# command. Install the real one:  brew tap render-oss/render && brew install render
-#
-# Render Blueprints deploy via GitOps: pushing render.yaml to the connected repo
-# triggers a sync. We validate the YAML locally (no fake `render blueprints
-# validate` command exists) and then push.
+# Uses the REAL Render.com CLI at ~/.local/bin/render (v2.20.0), bypassing any
+# npm "render" template package that may shadow PATH.
 set -euo pipefail
 
+RENDER="$HOME/.local/bin/render"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-echo "==> Validating render.yaml structure locally..."
-uv run python - <<'PY'
-import sys
-import yaml
+if [[ ! -x "$RENDER" ]]; then
+  echo "ERROR: Render CLI not found at $RENDER" >&2
+  echo "Install the real CLI (NOT the npm 'render' package): https://render.com/docs/cli" >&2
+  exit 1
+fi
 
-with open("render.yaml") as fh:
-    data = yaml.safe_load(fh)
-
-services = data.get("services", [])
-if not services:
-    sys.exit("render.yaml has no 'services' — nothing to deploy.")
-names = ", ".join(s.get("name", "?") for s in services)
-print(f"render.yaml OK: {len(services)} service(s): {names}")
-PY
+echo "==> Validating render.yaml against the Render Blueprint schema..."
+"$RENDER" blueprints validate render.yaml
 
 echo "==> Syncing the Blueprint to GitHub (Render auto-deploys connected repos on push)..."
 git push origin main
@@ -34,18 +24,10 @@ git push origin main
 cat <<'EOF'
 
 ============================================================
- Finish with the REAL Render CLI (render-oss):
+ Trigger the deploy with the real Render CLI:
 ============================================================
-  brew tap render-oss/render && brew install render   # if not already installed
-  render login
-
-  # One-time: connect this repo's render.yaml as a Blueprint
-  render blueprint launch          # interactive blueprint sync
-
-  # Trigger + wait for a deploy of a specific service:
-  render deploys create <SERVICE_ID> --wait --confirm
-
-  # Find <SERVICE_ID> with:
-  render services
+  ~/.local/bin/render login
+  ~/.local/bin/render services                        # find your <service_id>
+  ~/.local/bin/render deploys create <service_id> --wait
 ============================================================
 EOF

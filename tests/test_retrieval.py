@@ -93,3 +93,23 @@ def test_build_embeddings_dispatches_to_openai():
     )
 
     assert isinstance(emb, OpenAIEmbeddings)
+
+
+def test_build_embeddings_dispatches_to_voyage(monkeypatch):
+    # Mock the Voyage class: its real constructor fetches a tokenizer from the
+    # HF Hub (network), which the zero-network unit-test rule forbids.
+    import langchain_voyageai
+
+    sentinel = object()
+    monkeypatch.setattr(langchain_voyageai, "VoyageAIEmbeddings", lambda **kwargs: sentinel)
+
+    emb = build_embeddings(
+        Settings(
+            _env_file=None,
+            embedding_provider="voyage",
+            embedding_model="voyage-3.5-lite",
+            voyage_api_key="pa-test",
+        )
+    )
+
+    assert emb is sentinel

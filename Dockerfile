@@ -9,10 +9,16 @@ ENV UV_COMPILE_BYTECODE=1 \
 
 WORKDIR /app
 
+# INCLUDE_LOCAL_EMBEDDINGS=true also installs the heavy `local` group (torch +
+# bge-large) for full-local `docker compose`. Default false = slim cloud image
+# (hosted Voyage embeddings, no torch) that fits a 512MB instance (ADR-019).
+ARG INCLUDE_LOCAL_EMBEDDINGS=false
+
 # Install runtime deps first (cached layer); exclude dev deps for a lean image.
 COPY pyproject.toml uv.lock ./
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-dev --no-install-project
+    uv sync --frozen --no-dev --no-install-project \
+    $(if [ "$INCLUDE_LOCAL_EMBEDDINGS" = "true" ]; then echo "--group local"; fi)
 
 # --- runtime: slim image with just the venv + source ----------------------
 FROM python:3.12-slim-bookworm AS runtime

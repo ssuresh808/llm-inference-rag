@@ -39,8 +39,9 @@ def build_embeddings(settings: Settings | None = None) -> Embeddings:
     """Return the embeddings backend named by ``settings.embedding_provider``.
 
     Supported providers: ``"huggingface"`` (local, free — default),
-    ``"openai"``, and ``"nvidia"``. The matching integration package is imported
-    lazily, and a clear error is raised if it is not installed.
+    ``"voyage"`` (hosted, light), ``"openai"``, and ``"nvidia"``. The matching
+    integration package is imported lazily, and a clear error is raised if it is
+    not installed.
 
     Args:
         settings: Configuration to read from. Defaults to ``get_settings()``.
@@ -91,6 +92,19 @@ def build_embeddings(settings: Settings | None = None) -> Embeddings:
             api_key=settings.openai_api_key or None,
         )
 
+    if provider == "voyage":
+        try:
+            from langchain_voyageai import VoyageAIEmbeddings
+        except ImportError as exc:  # pragma: no cover - install guard
+            raise ImportError(
+                "The 'voyage' provider needs langchain-voyageai. "
+                "Install it (and set VOYAGE_API_KEY) or set EMBEDDING_PROVIDER."
+            ) from exc
+        return VoyageAIEmbeddings(
+            model=settings.embedding_model,
+            voyage_api_key=settings.voyage_api_key or None,
+        )
+
     if provider == "nvidia":
         try:
             from langchain_nvidia_ai_endpoints import NVIDIAEmbeddings
@@ -106,7 +120,7 @@ def build_embeddings(settings: Settings | None = None) -> Embeddings:
 
     raise ValueError(
         f"Unknown embedding_provider '{settings.embedding_provider}'. "
-        "Expected one of: huggingface, openai, nvidia."
+        "Expected one of: huggingface, voyage, openai, nvidia."
     )
 
 

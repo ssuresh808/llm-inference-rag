@@ -89,6 +89,9 @@ class Settings(BaseSettings):
     nvidia_api_key: str = Field(
         default="", description="API key for NVIDIA NeMo Retriever, hosted (optional)."
     )
+    voyage_api_key: str = Field(
+        default="", description="API key for Voyage AI hosted embeddings (optional)."
+    )
     qdrant_url: str = Field(
         default=":memory:",
         description="Qdrant URL, or ':memory:' for the local in-memory store.",

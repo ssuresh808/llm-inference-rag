@@ -5,7 +5,10 @@
 # ./.qdrant_storage and reaches the host-native Ollama via host.docker.internal.
 services:
   backend:
-    build: .
+    build:
+      context: .
+      args:
+        INCLUDE_LOCAL_EMBEDDINGS: "true"
     image: rag-portfolio:latest
     command:
       - uvicorn
@@ -28,7 +31,10 @@ services:
       - "host.docker.internal:host-gateway"
 
   frontend:
-    build: .
+    build:
+      context: .
+      args:
+        INCLUDE_LOCAL_EMBEDDINGS: "true"
     image: rag-portfolio:latest
     command:
       - streamlit

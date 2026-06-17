@@ -46,6 +46,8 @@ class Settings(BaseSettings):
         arxiv_dataset: HF dataset id for the on-domain arXiv corpus.
         arxiv_collection: Qdrant collection for the LLM-optimization corpus.
         arxiv_max_docs: Fail-safe cap on documents pulled from the arXiv stream.
+        ragas_judge_provider: LLM provider for the RAGAS judge (ollama/openai/anthropic).
+        ragas_judge_model: Model id for the RAGAS judge; empty = use llm_model.
     """
 
     model_config = SettingsConfigDict(
@@ -135,6 +137,14 @@ class Settings(BaseSettings):
     arxiv_max_docs: int = Field(
         default=500,
         description="Fail-safe cap on documents pulled from the arXiv stream.",
+    )
+    ragas_judge_provider: str = Field(
+        default="ollama",
+        description="LLM provider for the RAGAS judge: ollama, openai, or anthropic.",
+    )
+    ragas_judge_model: str = Field(
+        default="",
+        description="Model id for the RAGAS judge; empty = fall back to llm_model.",
     )
 
 

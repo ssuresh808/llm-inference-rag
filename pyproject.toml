@@ -20,6 +20,7 @@ dependencies = [
     "pypdf>=5.0",
     "datasets>=3.0",
     "fastembed>=0.4",
+    "ragas>=0.2",
 ]
 
 [dependency-groups]
@@ -48,6 +49,7 @@ convention = "google"
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["D"]       # tests don't need docstrings
 "src/**/__init__.py" = ["D104"]
+"scripts/__init__.py" = ["D104"]
 
 [tool.black]
 line-length = 100

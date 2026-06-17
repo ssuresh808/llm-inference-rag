@@ -268,3 +268,26 @@ NemoClaw ≠ NeMo Retriever (ADR-003) — different product, similar "Nemo" nami
   chunks** indexed on MPS. Retrieval is precisely on-topic (KV-RM, KVServe,
   KVDrive, ParisKV, …). Streaming + a 500-doc fail-safe keep memory bounded; the
   pure selection transform is unit-tested offline (mocked stream).
+
+---
+
+## ADR-016: RAGAS evaluation judge — local-default, hosted-fallback
+
+- **Status:** Implemented (Phase 2c).
+- **Decision:** Measure generation quality with RAGAS (**faithfulness**,
+  **answer_relevancy**). The judge LLM is config-selected via
+  `RAGAS_JUDGE_PROVIDER` (default `ollama` → qwen2.5:14b, swappable to
+  `openai`/`anthropic` through the existing provider factories); RAGAS embeddings
+  reuse local `bge-large`. The eval loop is **NaN-tolerant** — malformed
+  local-judge output is logged and returned as NaN, never crashes.
+- **Why:** Keep the RAG *application* fully local and free, while acknowledging
+  that RAGAS's metric prompts demand strict JSON-schema adherence that local
+  ~14B models satisfy unreliably. The fallback flag lets a frontier model produce
+  clean, defensible numbers for the portfolio **without** making the app depend
+  on a paid API.
+- **Trade-off:** local judge = free + private but noisy/partial (NaN) and slow
+  (many LLM calls per question); hosted judge = clean numbers but paid +
+  external — used *only* for the evaluation step.
+- **Consequence:** Adds `ragas`; its imports are lazy so the module and its tests
+  load without it and make no network/GPU calls. The default judge path makes no
+  external API calls (no OpenAI leakage).

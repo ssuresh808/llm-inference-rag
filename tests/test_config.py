@@ -40,6 +40,8 @@ def test_settings_defaults_without_env(monkeypatch):
     assert settings.arxiv_dataset == "librarian-bots/arxiv-metadata-snapshot"
     assert settings.arxiv_collection == "llm_optimization_domain"
     assert settings.arxiv_max_docs == 500
+    assert settings.ragas_judge_provider == "ollama"
+    assert settings.ragas_judge_model == ""
 
 
 def test_get_settings_is_cached():

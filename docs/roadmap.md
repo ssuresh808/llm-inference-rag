@@ -28,8 +28,9 @@ and deployment — strong enough to anchor a job-search portfolio. Primary signa
 - ✅ On-domain corpus (Phase 2b): `librarian-bots/arxiv-metadata-snapshot`
   filtered to recent LLM-optimization papers; isolated `llm_optimization_domain`
   collection (500 papers → 1,477 chunks; retrieval verified on-topic).
-- ⬜ RAGAS generation metrics (faithfulness, answer/context relevancy) — also the
-  fair way to re-judge reranking.
+- ✅ RAGAS generation metrics (Phase 2c): local qwen2.5:14b judge + bge-large,
+  NaN-tolerant, hosted-judge fallback (`RAGAS_JUDGE_PROVIDER`). Sample:
+  faithfulness 0.48, answer_relevancy 0.65 (local judge; see experiments.md).
 - ⬜ Experiment tracking (Weights & Biases).
 
 **Phase 3 — Ship: ⬜ not started**
@@ -41,9 +42,9 @@ and deployment — strong enough to anchor a job-search portfolio. Primary signa
 1. ✅ **On-domain corpus (Phase 2b)** — done via
    `librarian-bots/arxiv-metadata-snapshot` (category + date + seed-vocab filter)
    into the isolated `llm_optimization_domain` collection.
-2. **RAGAS generation metrics** (LLM-judge via Ollama) — defensible answer-quality
-   numbers + a fair reranking re-evaluation. **(next)**
-3. **W&B** experiment tracking for the ablations.
+2. ✅ **RAGAS generation metrics (Phase 2c)** — local judge, NaN-tolerant,
+   hosted-fallback flag; sample faithfulness 0.48 / answer_relevancy 0.65.
+3. **W&B** experiment tracking for the ablations. **(next)**
 4. **Phase 3 deploy.** See open decision below.
 5. **Publish to GitHub** (currently local-only — see below).
 

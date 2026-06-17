@@ -45,6 +45,7 @@ def test_settings_defaults_without_env(monkeypatch):
     assert settings.enable_wandb is False
     assert settings.wandb_project == "llm-rag-inference"
     assert settings.wandb_entity == ""
+    assert settings.generation_mode == "single"
 
 
 def test_get_settings_is_cached():

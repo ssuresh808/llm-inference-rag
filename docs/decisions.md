@@ -313,3 +313,33 @@ NemoClaw ≠ NeMo Retriever (ADR-003) — different product, similar "Nemo" nami
 - **Limitation:** RAGAS does not expose per-question raw judge text on a parse
   failure, so `raw_judge_output` carries the parser error string (total-failure
   case) and is empty for per-row NaNs.
+
+---
+
+## ADR-018: Agentic generation (LangGraph ReAct) behind a feature flag
+
+- **Status:** Implemented (Phase 3) — **default OFF**.
+- **Decision:** Introduce an agentic generation path — a **LangGraph
+  `create_react_agent`** plus a `search_arxiv_literature` tool over the Qdrant
+  engine, driven by local `qwen2.5:14b` (or the hosted fallback) — gated by
+  `GENERATION_MODE` (`single` | `agent`, default `single`). The single-shot
+  `answer_question` stays the default, RAGAS-measured baseline and is
+  **untouched**. The `/api/v1/answer` endpoint routes on the flag; both paths
+  return the identical `RagAnswer` schema (answer + sources + chunks).
+- **Pivot (deepagents → LangGraph ReAct):** We first built this on
+  `deepagents`/`create_deep_agent`. A **live smoke test** exposed that
+  deepagents' heavy built-in middleware (todo-planning, filesystem, subagents)
+  overwhelms a local 14B model: qwen2.5:14b **never called the search tool** and
+  produced off-topic output. A control test confirmed qwen *does* call the same
+  tool reliably in a lightweight harness. We therefore migrated to **LangGraph
+  ReAct**, a lighter, more reliable tool-calling harness for 14B-parameter local
+  models — preserving the strict **local-first, privacy-preserving** constraint
+  (no hosted model required for the agent to work).
+- **Why a flag:** ADR-011 requires promoting the agent to default **only if it
+  beats the baseline on a metric**. The flag enables side-by-side RAGAS
+  evaluation (single vs agent) before promotion, protecting the
+  defensible-numbers thesis and avoiding an unmeasured regression on the demo.
+- **Consequence:** Adds `langgraph`; `deepagents` was removed. Imports are lazy —
+  the default single path never constructs an agent. Tests cover the retrieval
+  tool, answer extraction (dict + `AIMessage`), and routing; the live tool-call
+  behavior was validated by smoke test.

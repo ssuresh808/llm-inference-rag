@@ -6,6 +6,7 @@ All settings load from environment variables (and a local ``.env`` file) via
 """
 
 from functools import lru_cache
+from typing import Literal
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -51,6 +52,9 @@ class Settings(BaseSettings):
         enable_wandb: When True, log evaluation runs to Weights & Biases.
         wandb_project: Weights & Biases project name.
         wandb_entity: Weights & Biases entity (team/user); empty = default account.
+        generation_mode: Which generation path the API uses: ``"single"`` (the
+            RAGAS-measured single-shot baseline, default) or ``"agent"`` (the
+            LangGraph ReAct path, behind this flag — see ADR-018).
     """
 
     model_config = SettingsConfigDict(
@@ -160,6 +164,10 @@ class Settings(BaseSettings):
     wandb_entity: str = Field(
         default="",
         description="Weights & Biases entity (team/user); empty = default account.",
+    )
+    generation_mode: Literal["single", "agent"] = Field(
+        default="single",
+        description="Generation path: 'single' (baseline) or 'agent' (LangGraph ReAct).",
     )
 
 

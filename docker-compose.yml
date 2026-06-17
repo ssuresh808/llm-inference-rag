@@ -1,0 +1,46 @@
+# Orchestrates the FastAPI backend (8000) and the Streamlit frontend (8501).
+# Both run the same image; the frontend overrides the command.
+#
+# The backend reads the pre-seeded persistent Qdrant collection mounted from
+# ./.qdrant_storage and reaches the host-native Ollama via host.docker.internal.
+services:
+  backend:
+    build: .
+    image: rag-portfolio:latest
+    command:
+      - uvicorn
+      - src.api.main:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+    ports:
+      - "8000:8000"
+    environment:
+      EMBEDDING_PROVIDER: huggingface
+      LLM_PROVIDER: ollama
+      OLLAMA_BASE_URL: http://host.docker.internal:11434
+      QDRANT_PATH: /data/qdrant
+      QDRANT_COLLECTION: llm_optimization_domain
+    volumes:
+      - ./.qdrant_storage:/data/qdrant
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  frontend:
+    build: .
+    image: rag-portfolio:latest
+    command:
+      - streamlit
+      - run
+      - src/frontend/app.py
+      - --server.port
+      - "8501"
+      - --server.address
+      - 0.0.0.0
+    ports:
+      - "8501:8501"
+    environment:
+      RAG_API_URL: http://backend:8000
+    depends_on:
+      - backend

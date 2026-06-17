@@ -11,7 +11,38 @@ from langchain_core.embeddings import DeterministicFakeEmbedding
 from langchain_core.language_models.fake_chat_models import FakeListChatModel
 
 from src.api.main import app, get_engine, get_llm
+from src.config.settings import Settings
 from src.retrieval.engine import RetrievalEngine
+
+
+def test_get_engine_attaches_to_persistent_collection(monkeypatch):
+    from src.api import main as api_main
+
+    class _FakeEngine:
+        def __init__(self):
+            self.connected = False
+            self.indexed = False
+
+        def connect_existing(self):
+            self.connected = True
+
+        def index(self, chunks):
+            self.indexed = True
+
+    fake = _FakeEngine()
+    monkeypatch.setattr(api_main, "build_engine", lambda: fake)
+    monkeypatch.setattr(
+        api_main, "get_settings", lambda: Settings(_env_file=None, qdrant_path="/tmp/seeded")
+    )
+    api_main.get_engine.cache_clear()
+    try:
+        engine = api_main.get_engine()
+    finally:
+        api_main.get_engine.cache_clear()
+
+    assert engine is fake
+    assert fake.connected is True
+    assert fake.indexed is False  # persistent DB is not re-indexed
 
 
 def _indexed_engine() -> RetrievalEngine:

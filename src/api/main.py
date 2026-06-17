@@ -16,8 +16,8 @@ from langchain_core.language_models import BaseChatModel
 from pydantic import BaseModel, Field
 
 from src.config.settings import get_settings
+from src.generation.dispatch import generate_answer
 from src.generation.llm import build_llm
-from src.generation.rag import answer_question
 from src.ingestion.loader import ingest_directory
 from src.retrieval.engine import RetrievalEngine, build_engine
 
@@ -56,14 +56,25 @@ class AnswerResponse(BaseModel):
 
 @lru_cache
 def get_engine() -> RetrievalEngine:
-    """Return a cached retrieval engine, indexing the corpus on first use.
+    """Return a cached retrieval engine.
+
+    With a persistent Qdrant path (``QDRANT_PATH`` set, e.g. the Docker volume),
+    attach to the pre-seeded collection without re-indexing. Otherwise index the
+    local corpus (``CORPUS_DIR``) on first use.
 
     Returns:
-        The singleton ``RetrievalEngine`` with the configured corpus indexed,
-        if the corpus directory exists and yields chunks.
+        The singleton ``RetrievalEngine``, ready to query.
     """
+    settings = get_settings()
     engine = build_engine()
-    corpus_dir = get_settings().corpus_dir
+    if settings.qdrant_path:
+        try:
+            engine.connect_existing()
+            logger.info("Attached to persistent collection '%s'.", settings.qdrant_collection)
+            return engine
+        except Exception as exc:  # noqa: BLE001 - fall back to corpus indexing
+            logger.warning("No persistent collection to attach (%s); indexing corpus.", exc)
+    corpus_dir = settings.corpus_dir
     if Path(corpus_dir).is_dir():
         chunks = ingest_directory(corpus_dir)
         if chunks:
@@ -116,7 +127,11 @@ def query(
         return QueryResponse(results=[])
 
     results = [
-        {"text": doc.page_content, "source": doc.metadata.get("source")}
+        {
+            "text": doc.page_content,
+            "source": doc.metadata.get("source"),
+            "title": doc.metadata.get("title"),
+        }
         for doc in documents
     ]
     return QueryResponse(results=results)
@@ -140,7 +155,7 @@ def answer(
         or a graceful empty response if nothing has been indexed yet.
     """
     try:
-        result = answer_question(
+        result = generate_answer(
             request.text, engine=engine, llm=llm, top_k=request.top_k
         )
     except RuntimeError:
@@ -150,7 +165,11 @@ def answer(
         )
 
     results = [
-        {"text": doc.page_content, "source": doc.metadata.get("source")}
+        {
+            "text": doc.page_content,
+            "source": doc.metadata.get("source"),
+            "title": doc.metadata.get("title"),
+        }
         for doc in result.chunks
     ]
     return AnswerResponse(answer=result.answer, sources=result.sources, results=results)

@@ -22,6 +22,9 @@ dependencies = [
     "fastembed>=0.4",
     "ragas>=0.2",
     "wandb>=0.18",
+    "langgraph>=1.2.5",
+    "streamlit>=1.58.0",
+    "httpx>=0.28.1",
 ]
 
 [dependency-groups]
@@ -51,6 +54,7 @@ convention = "google"
 "tests/**" = ["D"]       # tests don't need docstrings
 "src/**/__init__.py" = ["D104"]
 "scripts/__init__.py" = ["D104"]
+"src/frontend/app.py" = ["E501"]  # embedded CSS/HTML strings exceed line length
 
 [tool.black]
 line-length = 100

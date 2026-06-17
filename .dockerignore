@@ -1,0 +1,13 @@
+.venv/
+.git/
+.github/
+.qdrant_storage/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+.env
+docs/
+tests/
+.DS_Store

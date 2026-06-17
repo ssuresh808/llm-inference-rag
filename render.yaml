@@ -1,9 +1,9 @@
-# Render Blueprint — deploys the two Docker services (FastAPI + Streamlit).
+# Render Blueprint - deploys the two Docker services (FastAPI + Streamlit).
 #
-# The cloud runs fully on HOSTED providers (no local Ollama, no local model
-# inference): embeddings + LLM via OpenAI, vectors via Qdrant Cloud. This is the
-# same image as `docker compose`, only the env vars change — the provider
-# factories and the QDRANT_CLOUD_URL fallback do the rest.
+# A3 hybrid cloud stack: LLM via Anthropic (Claude), embeddings via local
+# bge-large (sentence-transformers, downloaded on first use, runs in-container),
+# and vectors via Qdrant Cloud. Same image as `docker compose`; only the env
+# vars change - the provider factories and the QDRANT_CLOUD_URL fallback do the rest.
 #
 # Secrets use `sync: false`: Render prompts for them during Blueprint creation
 # and they are never committed.
@@ -19,18 +19,18 @@ services:
     healthCheckPath: /health
     envVars:
       - key: EMBEDDING_PROVIDER
-        value: openai
+        value: huggingface
       - key: EMBEDDING_MODEL
-        value: text-embedding-3-small
+        value: BAAI/bge-large-en-v1.5
       - key: LLM_PROVIDER
-        value: openai
+        value: anthropic
       - key: LLM_MODEL
-        value: gpt-4o-mini
+        value: claude-sonnet-4-6
       - key: GENERATION_MODE
         value: agent
       - key: QDRANT_COLLECTION
         value: llm_optimization_domain
-      - key: OPENAI_API_KEY
+      - key: ANTHROPIC_API_KEY
         sync: false
       - key: QDRANT_CLOUD_URL
         sync: false

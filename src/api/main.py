@@ -58,22 +58,24 @@ class AnswerResponse(BaseModel):
 def get_engine() -> RetrievalEngine:
     """Return a cached retrieval engine.
 
-    With a persistent Qdrant path (``QDRANT_PATH`` set, e.g. the Docker volume),
-    attach to the pre-seeded collection without re-indexing. Otherwise index the
-    local corpus (``CORPUS_DIR``) on first use.
+    When connected to a persistent or remote store (``QDRANT_PATH``, or Qdrant
+    Cloud via ``QDRANT_CLOUD_URL`` + ``QDRANT_API_KEY``), attach to the pre-seeded
+    collection without re-indexing. Otherwise index the local corpus
+    (``CORPUS_DIR``) on first use.
 
     Returns:
         The singleton ``RetrievalEngine``, ready to query.
     """
     settings = get_settings()
     engine = build_engine()
-    if settings.qdrant_path:
+    is_remote = bool(settings.qdrant_cloud_url and settings.qdrant_api_key)
+    if settings.qdrant_path or is_remote:
         try:
             engine.connect_existing()
-            logger.info("Attached to persistent collection '%s'.", settings.qdrant_collection)
+            logger.info("Attached to seeded collection '%s'.", settings.qdrant_collection)
             return engine
         except Exception as exc:  # noqa: BLE001 - fall back to corpus indexing
-            logger.warning("No persistent collection to attach (%s); indexing corpus.", exc)
+            logger.warning("No seeded collection to attach (%s); indexing corpus.", exc)
     corpus_dir = settings.corpus_dir
     if Path(corpus_dir).is_dir():
         chunks = ingest_directory(corpus_dir)

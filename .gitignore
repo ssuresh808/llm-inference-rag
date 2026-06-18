@@ -12,7 +12,7 @@ data/raw/
 *.egg-info/
 .qdrant_storage/
 
-# Secrets — never commit real env files (only the *.example templates are tracked)
+# Secrets - never commit real env files (only the *.example templates are tracked)
 .env.cloud
 .env.*
 !.env.example

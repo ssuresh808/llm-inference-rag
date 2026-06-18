@@ -2,9 +2,9 @@
 
 The pipeline is three composable steps:
 
-1. :func:`load_documents` — read supported files from a directory.
-2. :func:`chunk_documents` — split documents with a deterministic splitter.
-3. :func:`apply_quality_gate` — clean whitespace and drop low-value chunks.
+1. :func:`load_documents` - read supported files from a directory.
+2. :func:`chunk_documents` - split documents with a deterministic splitter.
+3. :func:`apply_quality_gate` - clean whitespace and drop low-value chunks.
 
 :func:`ingest_directory` runs all three. Each step is pure and side-effect free
 (beyond logging), so it can be unit-tested without any network access.

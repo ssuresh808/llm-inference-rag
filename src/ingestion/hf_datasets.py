@@ -6,7 +6,7 @@ a pure function, so it is unit-tested without any network access.
 
 Default target: ``CShorten/ML-ArXiv-Papers`` (title + abstract). To stay on the
 inference-optimization domain (ADR-000), a row is kept only if it matches at
-least one term in **every** keyword group — i.e. it must be about language
+least one term in **every** keyword group - i.e. it must be about language
 models/transformers **and** about inference efficiency/serving (ADR-012). A
 single broad OR-list let in too much general ML.
 

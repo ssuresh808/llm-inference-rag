@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 def build_llm(settings: Settings | None = None) -> BaseChatModel:
     """Return the chat model named by ``settings.llm_provider``.
 
-    Supported providers: ``"ollama"`` (local, free — default), ``"anthropic"``,
+    Supported providers: ``"ollama"`` (local, free - default), ``"anthropic"``,
     and ``"openai"``. The matching integration package is imported lazily.
 
     Args:

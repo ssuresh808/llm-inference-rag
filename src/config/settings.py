@@ -17,7 +17,7 @@ class Settings(BaseSettings):
 
     Attributes:
         embedding_provider: Embedding backend to use. One of ``"huggingface"``
-            (local, free, no key — Phase 1 default), ``"nvidia"``, or
+            (local, free, no key - Phase 1 default), ``"nvidia"``, or
             ``"openai"``. Swappable without code changes (see ADR-003).
         embedding_model: Model identifier for the active provider (a
             sentence-transformers repo id by default).
@@ -36,7 +36,7 @@ class Settings(BaseSettings):
             the engine connects to the remote cluster instead of local storage.
         qdrant_api_key: API key for the Qdrant Cloud cluster.
         qdrant_collection: Name of the Qdrant collection holding the corpus.
-        llm_provider: LLM backend. One of ``"ollama"`` (local, free — default),
+        llm_provider: LLM backend. One of ``"ollama"`` (local, free - default),
             ``"anthropic"``, or ``"openai"``. Swappable via config (ADR-006).
         llm_model: Model identifier for the active LLM provider.
         ollama_base_url: Base URL of the local Ollama server.
@@ -57,7 +57,7 @@ class Settings(BaseSettings):
         wandb_entity: Weights & Biases entity (team/user); empty = default account.
         generation_mode: Which generation path the API uses: ``"single"`` (the
             RAGAS-measured single-shot baseline, default) or ``"agent"`` (the
-            LangGraph ReAct path, behind this flag — see ADR-018).
+            LangGraph ReAct path, behind this flag - see ADR-018).
     """
 
     model_config = SettingsConfigDict(

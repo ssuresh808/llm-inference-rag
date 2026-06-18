@@ -104,7 +104,7 @@ def build_react_agent(tools: list[BaseTool], settings: Settings | None = None) -
     """Create a LangGraph ReAct agent driven by the configured local/hosted LLM.
 
     A lightweight tool-calling harness (chosen over deepagents for reliable
-    tool use on local ~14B models — see ADR-018).
+    tool use on local ~14B models - see ADR-018).
 
     Args:
         tools: Tools the agent may call (e.g. the retrieval tool).

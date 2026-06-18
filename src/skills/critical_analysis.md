@@ -19,7 +19,7 @@ parallelism, etc.) rather than merely define it.
    another.
 4. **Demand evidence.** Prefer claims the retrieved passages actually support
    (reported speedups, conditions, baselines). Distinguish measured results
-   from authors' framing. Note the baseline — "2x faster" is meaningless without
+   from authors' framing. Note the baseline - "2x faster" is meaningless without
    one.
 5. **State the limits.** Call out where the evidence is thin, the conditions
    under which the technique degrades, and what the source did *not* test.

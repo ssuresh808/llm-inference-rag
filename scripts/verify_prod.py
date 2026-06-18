@@ -2,7 +2,7 @@
 
 Hits the live FastAPI service to prove the full cloud path works end to end: the
 health probe responds, and ``/api/v1/answer`` returns a grounded answer *with*
-sources — which only happens if Qdrant Cloud and the hosted LLM are both wired
+sources - which only happens if Qdrant Cloud and the hosted LLM are both wired
 up and talking to each other.
 
     uv run python scripts/verify_prod.py https://rag-backend.onrender.com

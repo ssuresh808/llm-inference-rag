@@ -1,7 +1,7 @@
 """Local RAGAS generation evaluation (faithfulness + answer_relevancy).
 
 Measures generation quality with a **local** judge by default (qwen2.5:14b via
-Ollama) and local bge-large embeddings — no OpenAI. Because local models often
+Ollama) and local bge-large embeddings - no OpenAI. Because local models often
 emit malformed JSON that RAGAS parsers reject, the loop is NaN-tolerant: a parse
 failure is logged and returned as NaN rather than crashing. A hosted judge can be
 swapped in via ``RAGAS_JUDGE_PROVIDER`` for cleaner numbers (ADR-016).

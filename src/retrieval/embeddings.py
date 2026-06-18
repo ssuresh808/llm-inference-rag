@@ -38,7 +38,7 @@ def _resolve_device(preference: str) -> str:
 def build_embeddings(settings: Settings | None = None) -> Embeddings:
     """Return the embeddings backend named by ``settings.embedding_provider``.
 
-    Supported providers: ``"huggingface"`` (local, free — default),
+    Supported providers: ``"huggingface"`` (local, free - default),
     ``"voyage"`` (hosted, light), ``"openai"``, and ``"nvidia"``. The matching
     integration package is imported lazily, and a clear error is raised if it is
     not installed.
@@ -103,6 +103,7 @@ def build_embeddings(settings: Settings | None = None) -> Embeddings:
         return VoyageAIEmbeddings(
             model=settings.embedding_model,
             voyage_api_key=settings.voyage_api_key or None,
+            batch_size=128,  # fewer, larger requests for fast bulk seeding
         )
 
     if provider == "nvidia":

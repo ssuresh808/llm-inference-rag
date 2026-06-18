@@ -104,8 +104,11 @@ hr.rule { border: 0; border-top: 1px solid var(--line); margin: 1.7rem 0 1.5rem;
 .stTextInput input::placeholder { color: #9CA3AF; }
 .stNumberInput input {
   border: 1px solid var(--line); border-radius: 10px; background: var(--surface);
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: 'IBM Plex Mono', monospace; color: var(--ink);
 }
+.stNumberInput input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+/* Hide Streamlit's "Press Enter to apply/submit" overlay that sat over the value. */
+[data-testid="InputInstructions"] { display: none; }
 
 .stNumberInput label {
   font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 500;

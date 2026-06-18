@@ -149,20 +149,31 @@ def _render_header() -> None:
 
 
 def _render_search() -> tuple[bool, str, int]:
-    """Render the search form and return (submitted, question, top_k)."""
-    with st.form("ask"):
-        question = st.text_input(
-            "Question",
-            placeholder="How does continuous batching improve GPU throughput?",
-            label_visibility="collapsed",
-        )
-        field, action = st.columns([4, 1], gap="medium")
-        top_k = field.number_input(
-            "Passages", min_value=1, max_value=20, value=5, label_visibility="collapsed"
-        )
-        submitted = action.form_submit_button("Search")
-    # Defensive clamp: guarantee a valid top_k even if widget state is corrupted.
-    return submitted, question, max(1, min(int(top_k), 20))
+    """Render decoupled search controls and return (submitted, question, top_k).
+
+    The question field and the number input are independent widgets with their
+    own session-state keys (``question`` / ``k_sources``), so a validation error
+    on one never locks the other. ``max_value`` caps the number client-side; the
+    Python clamp is a final guard before the request.
+    """
+    question = st.text_input(
+        "Question",
+        placeholder="How does continuous batching improve GPU throughput?",
+        key="question",
+        label_visibility="collapsed",
+    )
+    field, action = st.columns([3, 1], gap="medium", vertical_alignment="bottom")
+    field.number_input(
+        "Number of sources",
+        min_value=1,
+        max_value=20,
+        value=5,
+        step=1,
+        key="k_sources",
+    )
+    submitted = action.button("Search", use_container_width=True)
+    top_k = max(1, min(int(st.session_state.get("k_sources", 5)), 20))
+    return submitted, question, top_k
 
 
 def main() -> None:

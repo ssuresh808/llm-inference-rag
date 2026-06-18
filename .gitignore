@@ -17,3 +17,10 @@ data/raw/
 .env.*
 !.env.example
 !.env.cloud.example
+
+# Design-tooling scaffolding + skill-install artifacts (keep out of public repo)
+PRODUCT.md
+DESIGN.md
+.impeccable/
+skills-lock.json
+.github/skills/

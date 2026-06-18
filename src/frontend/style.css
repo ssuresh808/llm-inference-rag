@@ -1,8 +1,7 @@
 /* Frontend theme: a precise technical-SaaS look for a research retrieval tool.
-   IBM Plex Sans/Mono (engineered heritage, fits the inference-optimization
-   subject) on a clean light surface with a single restrained indigo accent.
-   The signature element is the source "datasheet" card - retrieval evidence
-   is the hero, not a chat bubble. */
+   IBM Plex Sans + IBM Plex Mono: a deliberate sans/mono contrast, where the mono
+   carries the engineered, inference-optimization signal. Clean light surface, one
+   restrained indigo accent, dense vertical rhythm. Retrieval evidence is the hero. */
 
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 
@@ -17,114 +16,125 @@
   --accent-hover: #4338CA;
   --accent-soft: #EEF0FF;
   --danger: #9A2A2A;
-  --radius: 12px;
+  --radius: 10px;
+  --radius-sm: 8px;
   --shadow: 0 1px 2px rgba(16, 17, 23, .04), 0 1px 3px rgba(16, 17, 23, .06);
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .stApp { background: var(--bg); }
 #MainMenu, header[data-testid="stHeader"], footer { visibility: hidden; }
 .block-container {
-  max-width: 1060px;
-  padding-top: 2.6rem;
-  padding-bottom: 4rem;
+  max-width: 1020px;
+  padding-top: 2rem;
+  padding-bottom: 2.5rem;
   font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
   color: var(--ink);
 }
 
-/* Header */
+/* Header: the single deliberate eyebrow */
 .eyebrow {
   font-family: 'IBM Plex Mono', monospace;
   font-size: 11px; font-weight: 500; letter-spacing: .16em;
   text-transform: uppercase; color: var(--accent);
 }
 .app-title {
-  font-weight: 700; font-size: clamp(30px, 4.5vw, 44px);
+  font-weight: 700; font-size: clamp(28px, 4vw, 40px);
   line-height: 1.08; letter-spacing: -.02em; color: var(--ink);
-  margin: .55rem 0 .55rem;
+  margin: .45rem 0 .5rem; text-wrap: balance;
 }
-.app-sub { font-size: 15.5px; line-height: 1.55; color: var(--muted); max-width: 62ch; }
-hr.rule { border: 0; border-top: 1px solid var(--line); margin: 1.7rem 0 1.5rem; }
+.app-sub { font-size: 15px; line-height: 1.5; color: var(--body); max-width: 68ch; }
+hr.rule { border: 0; border-top: 1px solid var(--line); margin: 1.3rem 0 1.2rem; }
 
-/* Section labels */
+/* Section label: toned down (not an eyebrow on every section) */
 .col-label {
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 11px; font-weight: 500; letter-spacing: .14em;
-  text-transform: uppercase; color: var(--muted); margin: 0 0 .7rem;
+  font-size: 10.5px; font-weight: 500; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--muted); margin: 0 0 .55rem;
 }
 
-/* Synthesis card */
-.card {
-  background: var(--surface); border: 1px solid var(--line);
-  border-radius: var(--radius); box-shadow: var(--shadow); padding: 1.4rem 1.5rem;
+/* Synthesis: native markdown inside the bordered scroll container */
+[data-testid="stMarkdownContainer"] table {
+  width: 100%; border-collapse: collapse; margin: .7rem 0; font-size: 13px;
 }
-.answer { font-size: 16px; line-height: 1.62; color: var(--body); white-space: pre-wrap; }
+[data-testid="stMarkdownContainer"] th, [data-testid="stMarkdownContainer"] td {
+  border: 1px solid var(--line); padding: .4rem .6rem; text-align: left;
+}
+[data-testid="stMarkdownContainer"] th { background: var(--accent-soft); font-weight: 600; }
+.stMain p, .stMain li { text-wrap: pretty; }
 
-/* Source cards - the signature element */
-.src-card {
-  display: block; background: var(--surface); border: 1px solid var(--line);
-  border-radius: 10px; padding: .85rem 1rem; margin-bottom: .6rem;
-  text-decoration: none;
-  transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+/* Sidebar: settings + citations */
+[data-testid="stSidebar"] { background: var(--surface); border-right: 1px solid var(--line); }
+.side-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px; font-weight: 500; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--muted); margin: 1.1rem 0 .55rem;
 }
-.src-card:hover {
-  border-color: var(--accent);
-  box-shadow: 0 4px 14px rgba(79, 70, 229, .12); transform: translateY(-1px);
+
+/* Source rows: dense, rule-separated, no card lift */
+.src-row {
+  display: flex; gap: .65rem; align-items: baseline;
+  padding: .55rem .2rem; border-bottom: 1px solid var(--line);
+  text-decoration: none; transition: background .12s var(--ease);
 }
+.src-row:hover { background: var(--accent-soft); }
 .src-rank {
   font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 600;
-  color: var(--accent);
+  color: var(--accent); flex: none;
 }
-.src-title {
-  font-size: 13.5px; font-weight: 600; color: var(--ink); line-height: 1.35;
-  display: block; margin: .2rem 0 .5rem;
-}
-.src-foot { display: flex; justify-content: space-between; align-items: center; }
-.src-id {
-  font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--muted);
-  background: var(--accent-soft); border-radius: 5px; padding: .14rem .42rem;
-}
-.src-link { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--accent); }
+.src-main { display: flex; flex-direction: column; gap: .15rem; min-width: 0; }
+.src-title { font-size: 12.5px; font-weight: 500; color: var(--ink); line-height: 1.32; }
+.src-id { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: var(--muted); }
 
 /* States */
 .notice {
   font-size: 14px; line-height: 1.5; color: var(--danger);
-  border: 1px solid #F1C7C7; background: #FDF4F4; border-radius: 10px;
+  border: 1px solid #F1C7C7; background: #FDF4F4; border-radius: var(--radius-sm);
   padding: .9rem 1.1rem;
 }
-.empty { font-size: 15px; color: var(--muted); padding: .3rem 0; }
+.empty { font-size: 14px; color: var(--muted); padding: .3rem 0; }
 
-/* Inputs */
+/* Inputs: focus bumps border weight (per spec) plus a soft ring */
 .stTextInput input {
   font-family: 'IBM Plex Sans', sans-serif; font-size: 15px;
-  border: 1px solid var(--line); border-radius: 10px; padding: .7rem .9rem;
+  border: 1px solid var(--line); border-radius: var(--radius-sm); padding: .68rem .9rem;
   background: var(--surface); color: var(--ink);
-  transition: border-color .15s ease, box-shadow .15s ease;
+  transition: border-color .12s var(--ease), box-shadow .12s var(--ease);
 }
-.stTextInput input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.stTextInput input:focus {
+  border-width: 2px; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft);
+}
 .stTextInput input::placeholder { color: #9CA3AF; }
 .stNumberInput input {
-  border: 1px solid var(--line); border-radius: 10px; background: var(--surface);
+  border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface);
   font-family: 'IBM Plex Mono', monospace; color: var(--ink);
+  transition: border-color .12s var(--ease), box-shadow .12s var(--ease);
 }
-.stNumberInput input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
-/* Hide Streamlit's "Press Enter to apply/submit" overlay that sat over the value. */
+.stNumberInput input:focus {
+  border-width: 2px; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft);
+}
 [data-testid="InputInstructions"] { display: none; }
-
-.stNumberInput label {
-  font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 500;
-  letter-spacing: .08em; text-transform: uppercase; color: var(--muted);
+.stNumberInput label, .stTextInput label {
+  font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; font-weight: 500;
+  letter-spacing: .06em; text-transform: uppercase; color: var(--muted);
 }
 
-/* Button */
-.stButton button, .stFormSubmitButton button {
-  width: 100%; border-radius: 10px; border: 1px solid var(--accent);
+/* Button: instant hover color (per spec); ease only the shadow */
+.stButton button {
+  border-radius: var(--radius-sm); border: 1px solid var(--accent);
   background: var(--accent); color: #fff;
   font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; font-weight: 600;
-  padding: .62rem 1.4rem;
-  transition: background .15s ease, box-shadow .15s ease, transform .05s ease;
+  padding: .55rem 1.5rem;
+  transition: box-shadow .12s var(--ease);
 }
-.stButton button:hover, .stFormSubmitButton button:hover {
+.stButton button:hover {
   background: var(--accent-hover); border-color: var(--accent-hover);
-  box-shadow: 0 4px 14px rgba(79, 70, 229, .25);
+  box-shadow: 0 3px 12px rgba(79, 70, 229, .22);
 }
-.stButton button:active, .stFormSubmitButton button:active { transform: translateY(1px); }
+.stButton button:active { transform: translateY(1px); }
+
+/* Reduced motion: degrade every transition/transform to instant */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+  .stButton button:active { transform: none; }
+}

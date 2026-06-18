@@ -1,8 +1,9 @@
 """Streamlit frontend for the RAG API: a clean, technical retrieval tool.
 
 Connects to the FastAPI ``/api/v1/answer`` endpoint and renders the grounded
-answer beside source cards (arXiv title + id + hyperlink), so retrieval
-provenance is the visible proof of work. Styling lives in ``style.css``. Run::
+answer (native markdown) in the main canvas, with source citations and the
+retrieval setting in the sidebar, so provenance is the visible proof of work.
+Styling lives in ``style.css``. Run::
 
     streamlit run src/frontend/app.py
 
@@ -19,6 +20,7 @@ import streamlit as st
 
 API_URL = os.environ.get("RAG_API_URL", "http://localhost:8000")
 REQUEST_TIMEOUT = 180.0
+ANALYSIS_HEIGHT = 800  # fixed height (px) of the scrollable analysis container
 _CSS = (Path(__file__).parent / "style.css").read_text(encoding="utf-8")
 
 _SUBTITLE = (
@@ -56,36 +58,6 @@ def _dedupe_sources(results: list[dict]) -> list[dict]:
     return unique
 
 
-def _render_answer(answer: str) -> None:
-    """Render the synthesized answer inside a card."""
-    st.markdown('<div class="col-label">Synthesis</div>', unsafe_allow_html=True)
-    body = html.escape(answer) if answer else "No answer was generated."
-    st.markdown(f'<div class="card answer">{body}</div>', unsafe_allow_html=True)
-
-
-def _render_sources(results: list[dict]) -> None:
-    """Render retrieved sources as cards: rank, arXiv title, id, and link."""
-    st.markdown('<div class="col-label">Sources</div>', unsafe_allow_html=True)
-    sources = _dedupe_sources(results)
-    if not sources:
-        st.markdown('<p class="empty">No sources retrieved.</p>', unsafe_allow_html=True)
-        return
-
-    cards = []
-    for index, record in enumerate(sources, start=1):
-        title = html.escape(record.get("title") or "Untitled")
-        source = html.escape(record.get("source") or "n/a")
-        cards.append(
-            f'<a class="src-card" href="{_arxiv_url(record.get("source"))}" '
-            f'target="_blank" rel="noopener">'
-            f'<span class="src-rank">{index:02d}</span>'
-            f'<span class="src-title">{title}</span>'
-            f'<span class="src-foot"><span class="src-id">{source}</span>'
-            f'<span class="src-link">arxiv.org &rarr;</span></span></a>'
-        )
-    st.markdown("".join(cards), unsafe_allow_html=True)
-
-
 def _request_answer(question: str, top_k: int) -> dict:
     """POST a question to the RAG API and return the parsed JSON response.
 
@@ -108,6 +80,73 @@ def _request_answer(question: str, top_k: int) -> dict:
     return response.json()
 
 
+def _render_header() -> None:
+    """Render the page header (single eyebrow, title, subtitle)."""
+    st.markdown(
+        '<div class="eyebrow">arXiv &middot; LLM inference optimization</div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        '<h1 class="app-title">Ask the inference-optimization literature.</h1>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(f'<p class="app-sub">{_SUBTITLE}</p>', unsafe_allow_html=True)
+
+
+def _render_settings() -> int:
+    """Render the retrieval setting in the sidebar; return the clamped top_k."""
+    with st.sidebar:
+        st.markdown('<div class="side-label">Retrieval</div>', unsafe_allow_html=True)
+        st.number_input(
+            "Sources to retrieve",
+            min_value=1,
+            max_value=20,
+            value=5,
+            step=1,
+            key="k_sources",
+        )
+    return max(1, min(int(st.session_state.get("k_sources", 5)), 20))
+
+
+def _render_search() -> tuple[bool, str]:
+    """Render the main query input and Search button; return (submitted, text)."""
+    question = st.text_input(
+        "Question",
+        placeholder="How does continuous batching improve GPU throughput?",
+        key="question",
+        label_visibility="collapsed",
+    )
+    submitted = st.button("Search")
+    return submitted, question
+
+
+def _render_citations(results: list[dict]) -> None:
+    """Render retrieved sources as dense, rule-separated rows in the sidebar."""
+    st.markdown('<div class="side-label">Citations</div>', unsafe_allow_html=True)
+    sources = _dedupe_sources(results)
+    if not sources:
+        st.markdown('<p class="empty">No sources retrieved.</p>', unsafe_allow_html=True)
+        return
+    rows = [
+        f'<a class="src-row" href="{_arxiv_url(record.get("source"))}" '
+        f'target="_blank" rel="noopener">'
+        f'<span class="src-rank">{index:02d}</span>'
+        f'<span class="src-main">'
+        f'<span class="src-title">{html.escape(record.get("title") or "Untitled")}</span>'
+        f'<span class="src-id">{html.escape(record.get("source") or "n/a")}</span>'
+        f"</span></a>"
+        for index, record in enumerate(sources, start=1)
+    ]
+    st.markdown("".join(rows), unsafe_allow_html=True)
+
+
+def _render_analysis(answer: str) -> None:
+    """Render the synthesized answer as native markdown in a scroll container."""
+    st.markdown('<div class="col-label">Synthesis</div>', unsafe_allow_html=True)
+    with st.container(height=ANALYSIS_HEIGHT, border=True):
+        st.markdown(answer or "_No answer was generated._")
+
+
 def _render_output() -> None:
     """Render the current result, error, or the initial invitation."""
     error = st.session_state.get("error")
@@ -127,53 +166,9 @@ def _render_output() -> None:
         )
         return
 
-    st.markdown('<hr class="rule"/>', unsafe_allow_html=True)
-    answer_col, sources_col = st.columns([60, 40], gap="large")
-    with answer_col:
-        _render_answer(result.get("answer", ""))
-    with sources_col:
-        _render_sources(result.get("results", []))
-
-
-def _render_header() -> None:
-    """Render the page header (eyebrow, title, subtitle)."""
-    st.markdown(
-        '<div class="eyebrow">arXiv &middot; LLM inference optimization</div>',
-        unsafe_allow_html=True,
-    )
-    st.markdown(
-        '<h1 class="app-title">Ask the inference-optimization literature.</h1>',
-        unsafe_allow_html=True,
-    )
-    st.markdown(f'<p class="app-sub">{_SUBTITLE}</p>', unsafe_allow_html=True)
-
-
-def _render_search() -> tuple[bool, str, int]:
-    """Render decoupled search controls and return (submitted, question, top_k).
-
-    The question field and the number input are independent widgets with their
-    own session-state keys (``question`` / ``k_sources``), so a validation error
-    on one never locks the other. ``max_value`` caps the number client-side; the
-    Python clamp is a final guard before the request.
-    """
-    question = st.text_input(
-        "Question",
-        placeholder="How does continuous batching improve GPU throughput?",
-        key="question",
-        label_visibility="collapsed",
-    )
-    field, action = st.columns([3, 1], gap="medium", vertical_alignment="bottom")
-    field.number_input(
-        "Number of sources",
-        min_value=1,
-        max_value=20,
-        value=5,
-        step=1,
-        key="k_sources",
-    )
-    submitted = action.button("Search", use_container_width=True)
-    top_k = max(1, min(int(st.session_state.get("k_sources", 5)), 20))
-    return submitted, question, top_k
+    with st.sidebar:
+        _render_citations(result.get("results", []))
+    _render_analysis(result.get("answer", ""))
 
 
 def main() -> None:
@@ -181,13 +176,14 @@ def main() -> None:
     st.set_page_config(
         page_title="Inference Atlas",
         layout="wide",
-        initial_sidebar_state="collapsed",
+        initial_sidebar_state="expanded",
     )
     st.markdown(f"<style>{_CSS}</style>", unsafe_allow_html=True)
 
+    top_k = _render_settings()
     _render_header()
     st.markdown('<hr class="rule"/>', unsafe_allow_html=True)
-    submitted, question, top_k = _render_search()
+    submitted, question = _render_search()
 
     if submitted and question.strip():
         with st.spinner("Retrieving and synthesizing"):

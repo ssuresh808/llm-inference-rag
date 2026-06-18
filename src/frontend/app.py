@@ -161,7 +161,8 @@ def _render_search() -> tuple[bool, str, int]:
             "Passages", min_value=1, max_value=20, value=5, label_visibility="collapsed"
         )
         submitted = action.form_submit_button("Search")
-    return submitted, question, int(top_k)
+    # Defensive clamp: guarantee a valid top_k even if widget state is corrupted.
+    return submitted, question, max(1, min(int(top_k), 20))
 
 
 def main() -> None:
